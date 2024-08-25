@@ -12,6 +12,8 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
   });
   const [loading, setLoading] = useState(false);
   const [txnMsg, setTxnMsg] = useState('');
+  const [isMinted, setMinted] = useState(false);
+  const [mintedLink, setMintedLinks] = useState([]);
 
   const projectId = '2WCbZ8YpmuPxUtM6PzbFOfY5k4B';
   const projectSecretKey = 'c8b676d8bfe769b19d88d8c77a9bd1e2';
@@ -47,6 +49,50 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
     setDnsRecordInput(defaultValues[recordType]);
   };
 
+  const sendSBTRootStock = async() => {
+    setLoading(true);
+    const updatedJSON = `{
+      "name": "${dnsRecordInput.domainName}",
+      "description": "Address Resolver: ${dnsRecordInput.addressResolver}\n Record Type: ${dnsRecordInput.dnsRecorderType}\n Expiry: ${dnsRecordInput.expiry}",
+      "image": "${dnsRecordInput.contact}"
+    }`;
+    setTxnMsg("Uploading to IPFS");
+    const result = await ipfs_client.add(updatedJSON);
+    console.log(result.cid.toString());
+    const cid = result.cid.toString();
+    setTxnMsg("Uploading on-chain via Rootstock");
+    let data = {
+      "to": connectedAddress,
+      "uri": cid,
+      ...dnsRecordInput
+    };
+    console.log(data);
+    const response = await fetch('http://localhost:8000/addDNS', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(data)
+    });
+    const resdata = await response.json();
+    console.log(resdata);
+    setTxnMsg("DNS Record Added!");
+    setMintedLinks(resdata);
+    setMinted(true);
+
+    // Clear input fields after successful addition
+    setDnsRecordInput({
+      domainName: '',
+      addressResolver: '',
+      dnsRecorderType: '',
+      expiry: '',
+      contact: ''
+    });
+
+    setLoading(false);
+
+  };
+
   const addDNSRecord = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -60,7 +106,7 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
       const result = await ipfs_client.add(updatedJSON);
       console.log(result.cid.toString());
       const cid = result.cid.toString();
-      setTxnMsg("Uploading on-chain");
+      setTxnMsg("Uploading on-chain via Fhenix");
       const tx = await contractWithSigner.safeMint(
         connectedAddress,
         cid,
@@ -125,16 +171,25 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
             className="w-full p-3 bg-gray-800 text-gray-300 rounded-md border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
           />
         ))}
-        <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-4 rounded-md transition duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50">
-          Add Record
+        <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-400 text-white font-medium py-3 px-4 rounded-md transition duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50">
+          Add Secure Record (Encrypted)
         </button>
-      </form>
+      </form> <br></br>
+      <button onClick={sendSBTRootStock} className="w-full bg-red-600 hover:bg-indigo-400 text-white font-medium py-3 px-4 rounded-md transition duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50">
+          Add Record(Direct)
+        </button>
       {loading && (
         <div className="mt-6 text-center">
           <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-500 mx-auto"></div>
           <p className="mt-3 text-gray-400">{txnMsg}</p>
         </div>
       )}
+      {isMinted && !loading &&
+        <div className="mt-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
+          <li className="text-gray-300 whitespace-pre-wrap">Transaction Hash: https://explorer.testnet.rootstock.io/tx/{mintedLink[0]}</li>
+          <p className="text-gray-300 whitespace-pre-wrap">Transaction Receipt: {mintedLink[1]}</p>
+        </div>
+      }
       {txnMsg && !loading && (
         <div className="mt-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
           <p className="text-gray-300 whitespace-pre-wrap">{txnMsg}</p>

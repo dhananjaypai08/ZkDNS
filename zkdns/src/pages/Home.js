@@ -5,7 +5,7 @@ import Landing from './Landing';
 import AddDNSRecord from '../components/AddDNSRecord';
 import SearchDNSRecord from '../components/SearchDNSRecord';
 import ZKProof from '../components/ZKProof';
-import abi from "../contracts/ZKDNS.json";
+import abi from "../contracts/ZKDNSFhenix.json";
 
 function Home() {
   const [provider, setProvider] = useState();
@@ -17,7 +17,7 @@ function Home() {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('home');
 
-  const desiredChainId = 31;
+  const desiredChainId = 8008135;
 
   const connectWallet = async () => {
     setLoading(true);

@@ -10,8 +10,18 @@ function SearchDNSRecord({ contract }) {
     e.preventDefault();
     setLoading(true);
     try {
-      const result = await contract.DNSMapping(searchDomainName);
-      setSearchResult(result);
+      let result = await contract.getDNS(searchDomainName);
+      const data = {
+        "_addr_resolver": result[0],
+        "record_type": result[1],
+        "expiry": result[2],
+        "contact": result[3],
+        "tokenuri": result[4],
+        "owner": result[5]
+      }
+    //   const result = await contract.getEncryptedDNS(searchDomainName);
+    //   console.log(result1[5].toBigNumber(), typeof(result1[5]));
+      setSearchResult(data);
     } catch (error) {
       console.error('Error searching DNS Record:', error);
       setSearchResult(null);
