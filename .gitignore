@@ -1,0 +1,27 @@
+proofs/env/
+Off-chain/env/
+zkdns/node_modules/
+
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+zkdns/node_modules
+zkdns/.pnp
+zkdns/.pnp.js
+
+# testing
+zkdns/coverage
+
+# production
+zkdns/build
+
+# misc
+zkdns/.DS_Store
+zkdns/.env.local
+zkdns/.env.development.local
+zkdns/.env.test.local
+zkdns/.env.production.local
+
+zkdns/npm-debug.log*
+zkdns/yarn-debug.log*
+zkdns/yarn-error.log*
