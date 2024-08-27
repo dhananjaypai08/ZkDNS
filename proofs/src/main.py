@@ -55,15 +55,15 @@ def compile_circuit(file: str):
 @app.get("/generate_witness")
 async def run_compute_command_and_wait_for_file(curr_age, age_threshold):
     input_file = './input.json'
-    data = {"privateAge" : curr_age, "ageThreshold": age_threshold}
-    with open(input_file, "w") as f:
-        json.dump(data, f, indent=4)
+    # data = {"privateAge" : curr_age, "ageThreshold": age_threshold}
+    # with open(input_file, "w") as f:
+    #     json.dump(data, f, indent=4)
     print('dumped inputs in json file')
     command = f"node ./AgeVerification_js/generate_witness.js ./AgeVerification_js/AgeVerification.wasm {input_file} AgeVerification_js/witness.wtns"
     output_file = "AgeVerification_js/witness.wtns"
     response = subprocess.run(command, shell=True, capture_output=True, text=True)
     print(response, type(response))
-    return strip_ansi_codes(str(response.stdout))
+    return strip_ansi_codes(response.stdout)
 
 @app.get("/export_zkey")
 async def generate_and_export_zkey():
@@ -79,8 +79,9 @@ async def generate_and_export_zkey():
 
 @app.get("/generate_proof")
 async def generate_proof():
-    command = 'snarkjs groth16 prove AgeVerification_0001.zkey AgeVerification_js/witness.wtns proof.json public.json'
+    command = 'npx snarkjs groth16 prove ./AgeVerification_0001.zkey AgeVerification_js/witness.wtns proof.json public.json'
     response = subprocess.run(command, shell=True, capture_output=True, text=True)
+    print(response)
     return response.stdout
 
 @app.get("/verify_proof")

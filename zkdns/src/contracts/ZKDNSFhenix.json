@@ -1,5 +1,5 @@
 {
-    "address": "0x3A92c403CcfD005C19B4a75E8ee178f3963dB85C",
+    "address": "0xb5ddC78A82227C25864F269a0fc58d4166AA26b0",
     "abi": [
         {
             "inputs": [],
@@ -57,24 +57,6 @@
             "type": "event"
         },
         {
-            "inputs": [
-                {
-                    "internalType": "address",
-                    "name": "to",
-                    "type": "address"
-                },
-                {
-                    "internalType": "uint256",
-                    "name": "tokenId",
-                    "type": "uint256"
-                }
-            ],
-            "name": "approve",
-            "outputs": [],
-            "stateMutability": "nonpayable",
-            "type": "function"
-        },
-        {
             "anonymous": false,
             "inputs": [
                 {
@@ -86,9 +68,9 @@
                 {
                     "components": [
                         {
-                            "internalType": "string",
+                            "internalType": "euint32",
                             "name": "_addr_resolver",
-                            "type": "string"
+                            "type": "uint256"
                         },
                         {
                             "internalType": "string",
@@ -101,9 +83,9 @@
                             "type": "string"
                         },
                         {
-                            "internalType": "string",
+                            "internalType": "euint32",
                             "name": "contact",
-                            "type": "string"
+                            "type": "uint256"
                         },
                         {
                             "internalType": "string",
@@ -164,125 +146,6 @@
             "type": "event"
         },
         {
-            "inputs": [],
-            "name": "renounceOwnership",
-            "outputs": [],
-            "stateMutability": "nonpayable",
-            "type": "function"
-        },
-        {
-            "inputs": [
-                {
-                    "internalType": "address",
-                    "name": "to",
-                    "type": "address"
-                },
-                {
-                    "internalType": "string",
-                    "name": "uri",
-                    "type": "string"
-                },
-                {
-                    "internalType": "string",
-                    "name": "domain_name",
-                    "type": "string"
-                },
-                {
-                    "internalType": "string",
-                    "name": "address_resolver",
-                    "type": "string"
-                },
-                {
-                    "internalType": "string",
-                    "name": "dns_recorder_type",
-                    "type": "string"
-                },
-                {
-                    "internalType": "string",
-                    "name": "expiry",
-                    "type": "string"
-                },
-                {
-                    "internalType": "string",
-                    "name": "contact",
-                    "type": "string"
-                }
-            ],
-            "name": "safeMint",
-            "outputs": [],
-            "stateMutability": "nonpayable",
-            "type": "function"
-        },
-        {
-            "inputs": [
-                {
-                    "internalType": "address",
-                    "name": "from",
-                    "type": "address"
-                },
-                {
-                    "internalType": "address",
-                    "name": "to",
-                    "type": "address"
-                },
-                {
-                    "internalType": "uint256",
-                    "name": "tokenId",
-                    "type": "uint256"
-                }
-            ],
-            "name": "safeTransferFrom",
-            "outputs": [],
-            "stateMutability": "nonpayable",
-            "type": "function"
-        },
-        {
-            "inputs": [
-                {
-                    "internalType": "address",
-                    "name": "from",
-                    "type": "address"
-                },
-                {
-                    "internalType": "address",
-                    "name": "to",
-                    "type": "address"
-                },
-                {
-                    "internalType": "uint256",
-                    "name": "tokenId",
-                    "type": "uint256"
-                },
-                {
-                    "internalType": "bytes",
-                    "name": "data",
-                    "type": "bytes"
-                }
-            ],
-            "name": "safeTransferFrom",
-            "outputs": [],
-            "stateMutability": "nonpayable",
-            "type": "function"
-        },
-        {
-            "inputs": [
-                {
-                    "internalType": "address",
-                    "name": "operator",
-                    "type": "address"
-                },
-                {
-                    "internalType": "bool",
-                    "name": "approved",
-                    "type": "bool"
-                }
-            ],
-            "name": "setApprovalForAll",
-            "outputs": [],
-            "stateMutability": "nonpayable",
-            "type": "function"
-        },
-        {
             "anonymous": false,
             "inputs": [
                 {
@@ -310,10 +173,24 @@
         {
             "inputs": [
                 {
-                    "internalType": "address",
-                    "name": "from",
-                    "type": "address"
-                },
+                    "internalType": "uint256",
+                    "name": "",
+                    "type": "uint256"
+                }
+            ],
+            "name": "DNSRecordNames",
+            "outputs": [
+                {
+                    "internalType": "string",
+                    "name": "",
+                    "type": "string"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [
                 {
                     "internalType": "address",
                     "name": "to",
@@ -325,20 +202,7 @@
                     "type": "uint256"
                 }
             ],
-            "name": "transferFrom",
-            "outputs": [],
-            "stateMutability": "nonpayable",
-            "type": "function"
-        },
-        {
-            "inputs": [
-                {
-                    "internalType": "address",
-                    "name": "newOwner",
-                    "type": "address"
-                }
-            ],
-            "name": "transferOwnership",
+            "name": "approve",
             "outputs": [],
             "stateMutability": "nonpayable",
             "type": "function"
@@ -384,20 +248,20 @@
         {
             "inputs": [
                 {
-                    "internalType": "uint256",
-                    "name": "",
+                    "internalType": "euint32",
+                    "name": "num",
                     "type": "uint256"
                 }
             ],
-            "name": "DNSRecordNames",
+            "name": "decryptInteger",
             "outputs": [
                 {
-                    "internalType": "string",
+                    "internalType": "uint32",
                     "name": "",
-                    "type": "string"
+                    "type": "uint32"
                 }
             ],
-            "stateMutability": "view",
+            "stateMutability": "pure",
             "type": "function"
         },
         {
@@ -422,16 +286,9 @@
         {
             "inputs": [
                 {
-                    "components": [
-                        {
-                            "internalType": "bytes",
-                            "name": "data",
-                            "type": "bytes"
-                        }
-                    ],
-                    "internalType": "struct inEuint32",
+                    "internalType": "uint32",
                     "name": "num",
-                    "type": "tuple"
+                    "type": "uint32"
                 }
             ],
             "name": "encryptInteger",
@@ -455,6 +312,50 @@
             ],
             "name": "getApproved",
             "outputs": [
+                {
+                    "internalType": "address",
+                    "name": "",
+                    "type": "address"
+                }
+            ],
+            "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "string",
+                    "name": "domain_name",
+                    "type": "string"
+                }
+            ],
+            "name": "getDNS",
+            "outputs": [
+                {
+                    "internalType": "uint32",
+                    "name": "",
+                    "type": "uint32"
+                },
+                {
+                    "internalType": "string",
+                    "name": "",
+                    "type": "string"
+                },
+                {
+                    "internalType": "string",
+                    "name": "",
+                    "type": "string"
+                },
+                {
+                    "internalType": "uint32",
+                    "name": "",
+                    "type": "uint32"
+                },
+                {
+                    "internalType": "string",
+                    "name": "",
+                    "type": "string"
+                },
                 {
                     "internalType": "address",
                     "name": "",
@@ -491,58 +392,14 @@
                     "type": "string"
                 }
             ],
-            "name": "getDNS",
-            "outputs": [
-                {
-                    "internalType": "string",
-                    "name": "",
-                    "type": "string"
-                },
-                {
-                    "internalType": "string",
-                    "name": "",
-                    "type": "string"
-                },
-                {
-                    "internalType": "string",
-                    "name": "",
-                    "type": "string"
-                },
-                {
-                    "internalType": "string",
-                    "name": "",
-                    "type": "string"
-                },
-                {
-                    "internalType": "string",
-                    "name": "",
-                    "type": "string"
-                },
-                {
-                    "internalType": "address",
-                    "name": "",
-                    "type": "address"
-                }
-            ],
-            "stateMutability": "view",
-            "type": "function"
-        },
-        {
-            "inputs": [
-                {
-                    "internalType": "string",
-                    "name": "domain_name",
-                    "type": "string"
-                }
-            ],
             "name": "getEncryptedDNS",
             "outputs": [
                 {
                     "components": [
                         {
-                            "internalType": "string",
+                            "internalType": "euint32",
                             "name": "_addr_resolver",
-                            "type": "string"
+                            "type": "uint256"
                         },
                         {
                             "internalType": "string",
@@ -555,9 +412,9 @@
                             "type": "string"
                         },
                         {
-                            "internalType": "string",
+                            "internalType": "euint32",
                             "name": "contact",
-                            "type": "string"
+                            "type": "uint256"
                         },
                         {
                             "internalType": "string",
@@ -648,6 +505,125 @@
             "type": "function"
         },
         {
+            "inputs": [],
+            "name": "renounceOwnership",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "to",
+                    "type": "address"
+                },
+                {
+                    "internalType": "string",
+                    "name": "uri",
+                    "type": "string"
+                },
+                {
+                    "internalType": "string",
+                    "name": "domain_name",
+                    "type": "string"
+                },
+                {
+                    "internalType": "uint32",
+                    "name": "address_resolver",
+                    "type": "uint32"
+                },
+                {
+                    "internalType": "string",
+                    "name": "dns_recorder_type",
+                    "type": "string"
+                },
+                {
+                    "internalType": "string",
+                    "name": "expiry",
+                    "type": "string"
+                },
+                {
+                    "internalType": "uint32",
+                    "name": "contact",
+                    "type": "uint32"
+                }
+            ],
+            "name": "safeMint",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "from",
+                    "type": "address"
+                },
+                {
+                    "internalType": "address",
+                    "name": "to",
+                    "type": "address"
+                },
+                {
+                    "internalType": "uint256",
+                    "name": "tokenId",
+                    "type": "uint256"
+                }
+            ],
+            "name": "safeTransferFrom",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "from",
+                    "type": "address"
+                },
+                {
+                    "internalType": "address",
+                    "name": "to",
+                    "type": "address"
+                },
+                {
+                    "internalType": "uint256",
+                    "name": "tokenId",
+                    "type": "uint256"
+                },
+                {
+                    "internalType": "bytes",
+                    "name": "data",
+                    "type": "bytes"
+                }
+            ],
+            "name": "safeTransferFrom",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "operator",
+                    "type": "address"
+                },
+                {
+                    "internalType": "bool",
+                    "name": "approved",
+                    "type": "bool"
+                }
+            ],
+            "name": "setApprovalForAll",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
             "inputs": [
                 {
                     "internalType": "bytes4",
@@ -696,6 +672,42 @@
                 }
             ],
             "stateMutability": "view",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "from",
+                    "type": "address"
+                },
+                {
+                    "internalType": "address",
+                    "name": "to",
+                    "type": "address"
+                },
+                {
+                    "internalType": "uint256",
+                    "name": "tokenId",
+                    "type": "uint256"
+                }
+            ],
+            "name": "transferFrom",
+            "outputs": [],
+            "stateMutability": "nonpayable",
+            "type": "function"
+        },
+        {
+            "inputs": [
+                {
+                    "internalType": "address",
+                    "name": "newOwner",
+                    "type": "address"
+                }
+            ],
+            "name": "transferOwnership",
+            "outputs": [],
+            "stateMutability": "nonpayable",
             "type": "function"
         }
     ]

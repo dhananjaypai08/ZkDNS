@@ -1,0 +1,21 @@
+{
+  "name": "attestations",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "@ethersproject/providers": "^5.7.2",
+    "@ethsign/sp-sdk": "^0.7.2",
+    "axios": "^1.7.5",
+    "dotenv": "^16.4.5",
+    "ethers": "^6.13.2",
+    "express": "^4.19.2",
+    "nodemon": "^3.1.4",
+    "viem": "^2.20.1"
+  }
+}

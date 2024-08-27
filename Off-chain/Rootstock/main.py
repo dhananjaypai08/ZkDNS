@@ -36,6 +36,7 @@ contract_address = data["address"]
 
 RPC_PROVIDER_APIKEY = os.environ.get('RPC_PROVIDER_APIKEY')
 RPC_PROVIDER_URL = 'https://rpc.testnet.rootstock.io/' + RPC_PROVIDER_APIKEY
+print(RPC_PROVIDER_URL)
 w3 = Web3(Web3.HTTPProvider(RPC_PROVIDER_URL))
 zkdns_contract = w3.eth.contract(address=contract_address, abi=contract_abi)
 
@@ -45,6 +46,10 @@ account_from = {
     'address': w3.eth.account.from_key(private_key).address
 }
 account = w3.eth.account.from_key(private_key)
+# print('gas estimated')
+# print(w3.eth.estimate_gas())
+print('nonce')
+print(w3.eth.get_transaction_count(account_from['address']))
 
 @app.post("/addDNS")
 async def home(request: Request):
@@ -52,31 +57,40 @@ async def home(request: Request):
     to, uri, domain_name, addressResolver, dnstype, expiry, contact = body["to"], body["uri"], body["domainName"], body["addressResolver"], body["dnsRecorderType"], body["expiry"], body["contact"]
     print(body)
     to = w3.to_checksum_address(to)
-    nonce = w3.eth.get_transaction_count(account.address)
+    nonce = w3.eth.get_transaction_count(account_from['address'])
+    gasprice = w3.eth.gas_price
+    print(to, nonce, gasprice)
+    
     # Build the transaction
     transaction = zkdns_contract.functions.safeMint(to, uri, domain_name, addressResolver, dnstype, expiry, contact).build_transaction({
-        'from': account_from["address"],
+        'from': w3.eth.account.from_key(private_key).address,
+        'gasPrice': w3.to_wei("20", "gwei"),
+        'gas': 20000000,
         'nonce': nonce,
-        'gasPrice': w3.eth.gas_price # Set an appropriate gas limit
     })
-
+    
+    print('transaction built')
+    print(transaction)
     # Sign the transaction
     signed_txn = w3.eth.account.sign_transaction(transaction, account_from['private_key'])
-    print(signed_txn)
+    hash = w3.to_hex(w3.keccak(signed_txn.raw_transaction))
+    print('signed transaction hash')
+    print(hash)
     # Send the transaction
     txn_hash = w3.eth.send_raw_transaction(signed_txn.raw_transaction)
     try:
-        txn_hash_hex = txn_hash.hex()
-        print(txn_hash_hex)
+        print(txn_hash)
+        # txn_hash_hex = txn_hash.hex()
+        # print("Transaction Hash:", txn_hash.hex())
     except Exception as e:
         print(e)
     try:
         txn_receipt = w3.eth.wait_for_transaction_receipt(txn_hash)
         print(txn_receipt.status)
-        print(f"Transaction successful with hash: { txn_receipt.transactionHash.hex() }")
-        print(txn_hash_hex, txn_receipt.blockHash.hex())
+        print("Transaction Receipt:", txn_receipt)
+        #print(txn_hash_hex, txn_receipt.blockHash.hex())
         transaction_details = {
-            "transaction_hash": txn_hash_hex,
+            "transaction_hash": txn_hash.hex(),
             "block_hash": txn_receipt.blockHash.hex(),
             "status": txn_receipt.status,
             "gas_used": txn_receipt.gasUsed,
@@ -86,7 +100,7 @@ async def home(request: Request):
         return transaction_details
     except Exception as e:
         print(e)
-    return txn_hash, txn_receipt.blockHash.hex()
+        return e
     
     
 if __name__ == "__main__":

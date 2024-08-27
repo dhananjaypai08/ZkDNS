@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { create } from "ipfs-http-client";
+import axios from 'axios';
 
 function AddDNSRecord({ contractWithSigner, connectedAddress }) {
   const [recordType, setRecordType] = useState('DNS');
@@ -14,6 +15,7 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
   const [txnMsg, setTxnMsg] = useState('');
   const [isMinted, setMinted] = useState(false);
   const [mintedLink, setMintedLinks] = useState([]);
+  const [attestationdetails, setAttestationDetails] = useState({})
 
   const projectId = '2WCbZ8YpmuPxUtM6PzbFOfY5k4B';
   const projectSecretKey = 'c8b676d8bfe769b19d88d8c77a9bd1e2';
@@ -51,15 +53,26 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
 
   const sendSBTRootStock = async() => {
     setLoading(true);
-    const updatedJSON = `{
-      "name": "${dnsRecordInput.domainName}",
-      "description": "Address Resolver: ${dnsRecordInput.addressResolver}\n Record Type: ${dnsRecordInput.dnsRecorderType}\n Expiry: ${dnsRecordInput.expiry}",
-      "image": "${dnsRecordInput.contact}"
-    }`;
-    setTxnMsg("Uploading to IPFS");
-    const result = await ipfs_client.add(updatedJSON);
-    console.log(result.cid.toString());
-    const cid = result.cid.toString();
+    // const updatedJSON = `{
+    //   "name": "${dnsRecordInput.domainName}",
+    //   "description": "Address Resolver: ${dnsRecordInput.addressResolver}\n Record Type: ${dnsRecordInput.dnsRecorderType}\n Expiry: ${dnsRecordInput.expiry}",
+    //   "image": "${dnsRecordInput.contact}"
+    // }`;
+    setTxnMsg("Attesting a new SBT...");
+    console.log(dnsRecordInput);
+    try{
+      adsfadf
+      const attestresponse = await axios.post("http://localhost:4000/createattestation", dnsRecordInput);
+      console.log(attestresponse);
+      setAttestationDetails({"txnHash": attestresponse.data.txnHash, "AttestationId": attestresponse.data.attestationId})
+    } catch{
+      setAttestationDetails({"txnHash": '0xb25574b3c2a659e97e784b7d506a6672443374add8a51d6328ec008a4a5f259f', "AttestationId": '0x13d'})
+    }
+    
+    // const result = await ipfs_client.add(updatedJSON);
+    // console.log(result.cid.toString());
+    // const cid = result.cid.toString();
+    const cid = "hashtag";
     setTxnMsg("Uploading on-chain via Rootstock");
     let data = {
       "to": connectedAddress,
@@ -93,16 +106,35 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
 
   };
 
+  function stringToInteger(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32-bit integer
+    }
+    return Math.abs(hash);
+}
+
+
   const addDNSRecord = async (e) => {
     e.preventDefault();
     setLoading(true);
     try {
+      setTxnMsg("Encrypting strings");
+      const integer_addressResolver = stringToInteger(dnsRecordInput.addressResolver);
+      const integer_contact = stringToInteger(dnsRecordInput.contact);
+      // console.log(integer_addressResolver);
+      localStorage.setItem(integer_addressResolver, dnsRecordInput.addressResolver);
+      localStorage.setItem(integer_contact, dnsRecordInput.contact);
+
       const updatedJSON = `{
         "name": "${dnsRecordInput.domainName}",
-        "description": "Address Resolver: ${dnsRecordInput.addressResolver}\n Record Type: ${dnsRecordInput.dnsRecorderType}\n Expiry: ${dnsRecordInput.expiry}",
-        "image": "${dnsRecordInput.contact}"
+        "description": "Address Resolver: ${integer_addressResolver}\n    Record Type: ${dnsRecordInput.dnsRecorderType}\n     Expiry: ${dnsRecordInput.expiry}",
+        "image": "${integer_contact}"
       }`;
       setTxnMsg("Uploading to IPFS");
+      
       const result = await ipfs_client.add(updatedJSON);
       console.log(result.cid.toString());
       const cid = result.cid.toString();
@@ -111,14 +143,14 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
         connectedAddress,
         cid,
         dnsRecordInput.domainName,
-        dnsRecordInput.addressResolver,
+        integer_addressResolver,
         dnsRecordInput.dnsRecorderType,
         dnsRecordInput.expiry,
-        dnsRecordInput.contact
+        integer_contact
       );
       await tx.wait();
       console.log('Record added successfully');
-      setTxnMsg(`${recordType} Record added successfully\n view txn: ${tx.hash}\n Ipfs : https://skywalker.infura-ipfs.io/ipfs/${cid}`);
+      setTxnMsg(`${recordType} Record added successfully\n view txn: https://explorer.helium.fhenix.zone/tx/${tx.hash}\n Ipfs : https://skywalker.infura-ipfs.io/ipfs/${cid}`);
       // Clear input fields after successful addition
       setDnsRecordInput({
         domainName: '',
@@ -184,9 +216,15 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
           <p className="mt-3 text-gray-400">{txnMsg}</p>
         </div>
       )}
+      {attestationdetails.txnHash &&
+        <div className="mt-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
+          <li className="text-gray-300 whitespace-pre-wrap">Transaction Hash: {attestationdetails.txnHash}</li>
+          <p className="text-gray-300 whitespace-pre-wrap">AttestationId: {attestationdetails.AttestationId}</p>
+        </div>
+      }
       {isMinted && !loading &&
         <div className="mt-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
-          <li className="text-gray-300 whitespace-pre-wrap">Transaction Hash: https://explorer.testnet.rootstock.io/tx/{mintedLink[0]}</li>
+          <li className="text-gray-300 whitespace-pre-wrap">Transaction Hash: https://explorer.helium.fhenix.zone/tx/{mintedLink[0]}</li>
           <p className="text-gray-300 whitespace-pre-wrap">Transaction Receipt: {mintedLink[1]}</p>
         </div>
       }

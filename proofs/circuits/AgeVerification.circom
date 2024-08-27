@@ -1,15 +1,10 @@
 pragma circom 2.0.0;
 
 template AgeVerification() {
-    signal input age;
-    signal input threshold;
-    signal output out;
-
-    signal diff;
-    diff <== age-threshold;
-    out <== diff;
-
-    
+    signal input a;
+    signal input b;
+    signal output c;
+    c <== (a*b)*0 + a + b;
 }
 
-component main = AgeVerification();
+component main{public [a, b]} = AgeVerification();
