@@ -126,6 +126,7 @@ app.get('/users/:id', (req, res) => {
     res.json(userData);
 });
 
+// Sign protocol's attesting data based on a given schema Id
 app.post('/createattestation', async(req, res) => {
     // Retrieve user data from your database or data source
     console.log(req.body);
@@ -161,6 +162,7 @@ app.post('/createschema', async(req, res) => {
 });
 
 
+// Hedera network's Topic 
 app.post("/createTopic", async(req, res) => {
   // Retrieve user data from your database or data source
   // Create a new topic
@@ -214,6 +216,8 @@ async function submitFirstMessage(message) {
   return {"transactionStatus": transactionStatus.toString(), "topicId": giventopicId.toString()};
 }
 
+
+// Hedera network's send message to a topic
 app.post('/sendMessage', async(req, res) => {
   // Retrieve user data from your database or data source
   const message = req.body.message;

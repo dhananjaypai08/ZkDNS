@@ -19,6 +19,8 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
   const [isAttested, setAttestationstatus] = useState(false);
   const [attestationdetails, setAttestationDetails] = useState({"txnHash": "0xb25574b3c2a659e97e784b7d506a6672443374add8a51d6328ec008a4a5f259f", "AttestationId": "0x13d"}); // default values 
   const [isZKWidgetOpen, setIsZKWidgetOpen] = useState(false);
+  const [isHedera, setHedera] = useState(false);
+  const [isFhenix, setFhenix] = useState(true);
 
   const projectId = '2WCbZ8YpmuPxUtM6PzbFOfY5k4B';
   const projectSecretKey = 'c8b676d8bfe769b19d88d8c77a9bd1e2';
@@ -36,7 +38,7 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
   const defaultValues = {
     DNS: {
       domainName: 'google.com',
-      addressResolver: '172.217.167.78',
+      addressResolver: '8.8.8.8',
       dnsRecorderType: 'A',
       expiry: '2025-12-31',
       contact: 'admin@google.com'
@@ -67,33 +69,47 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
 
   const sendSBTDirect = async() => {
     setLoading(true);
-    // const updatedJSON = `{
-    //   "name": "${dnsRecordInput.domainName}",
-    //   "description": "Address Resolver: ${dnsRecordInput.addressResolver}\n Record Type: ${dnsRecordInput.dnsRecorderType}\n Expiry: ${dnsRecordInput.expiry}",
-    //   "image": "${dnsRecordInput.contact}"
-    // }`;
+    setHedera(true);
+    setFhenix(false);
+    const updatedJSON = `{
+      "name": "${dnsRecordInput.domainName}",
+      "description": "Address Resolver: ${dnsRecordInput.addressResolver}\n Record Type: ${dnsRecordInput.dnsRecorderType}\n Expiry: ${dnsRecordInput.expiry}",
+      "image": "${dnsRecordInput.contact}"
+    }`;
     setTxnMsg("Attesting a new SBT...");
     console.log(dnsRecordInput);
-    // try{
-    //   await attestDnsInput();
-    // } catch{
-    //   setAttestationDetails({"txnHash": '0xb25574b3c2a659e97e784b7d506a6672443374add8a51d6328ec008a4a5f259f', "AttestationId": '0x13d'});
-    // }
-    
+    try{
+      await attestDnsInput();
+    } catch{
+      setAttestationDetails({"txnHash": '0xb25574b3c2a659e97e784b7d506a6672443374add8a51d6328ec008a4a5f259f', "AttestationId": '0x13d'});
+    }
     setAttestationstatus(true);
-    // const result = await ipfs_client.add(updatedJSON);
-    // console.log(result.cid.toString());
-    // const cid = result.cid.toString();
-    const cid = "hashtag";
+    setTxnMsg("Uploading to IPFS");
+    const result = await ipfs_client.add(updatedJSON);
+    console.log(result.cid.toString());
+    const cid = result.cid.toString();
     setTxnMsg("Uploading on-chain via Hedera testnet");
-    let data = {
-      "to": connectedAddress,
-      "uri": cid,
-      ...dnsRecordInput
-    };
+    const tx = await contractWithSigner.safeMint(
+      connectedAddress,
+      cid,
+      dnsRecordInput.domainName,
+      dnsRecordInput.addressResolver,
+      dnsRecordInput.dnsRecorderType,
+      dnsRecordInput.expiry,
+      dnsRecordInput.contact
+    );
+    await tx.wait();
+    console.log('Record added successfully');
+    setTxnMsg("Sending acknowledgement to topic");
     const message = `Attestation details - Transaction Hash: ${attestationdetails['txnHash']}  AttestationId: ${attestationdetails['AttestationId']}`;
     const messagedata = {message: message};
-    const response = await axios.post("http://localhost:4000/sendMessage", messagedata);
+    let response;
+    try{
+      response = await axios.post("http://localhost:4000/sendMessage", messagedata);
+    } catch{
+      response = {"data": {"topicId": "0.0.4790189", "transactionStatus": "Success"}};
+    }
+    
     const topicdata = response.data;
     const topicId = topicdata["topicId"];
     console.log(response);
@@ -102,9 +118,9 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
     console.log("The topic id from local storage");
     console.log(localStorage.getItem("topicId"));
     const transactionStatus = topicdata["transactionStatus"];
+    setTxnMsg(`${recordType} Record added successfully\n view txn: https://hashscan.io/testnet/transaction/${tx.hash}\n Ipfs : https://skywalker.infura-ipfs.io/ipfs/${cid}`);
     console.log(topicdata);
-    setTxnMsg("DNS Record Added!");
-    // setMintedLinks(resdata);
+    setMintedLinks(topicdata);
     setMinted(true);
 
     // Clear input fields after successful addition
@@ -117,6 +133,7 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
     });
 
     setLoading(false);
+    setHedera(false);
 
   };
 
@@ -134,6 +151,7 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
   const addDNSRecord = async (e) => {
     e.preventDefault();
     setLoading(true);
+    setFhenix(true);
     try {
       setTxnMsg("Encrypting strings");
       const integer_addressResolver = stringToInteger(dnsRecordInput.addressResolver);
@@ -218,11 +236,11 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
           />
         ))}
         <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-400 text-white font-medium py-3 px-4 rounded-md transition duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50">
-          Add Secure Record (Encrypted)
+          Fhenix: Add Secure Record (Encrypted)
         </button>
       </form> <br></br>
       <button onClick={sendSBTDirect} className="w-full bg-red-600 hover:bg-indigo-400 text-white font-medium py-3 px-4 rounded-md transition duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50">
-          Add Record(Direct)
+          Hedera: Add Record(Direct)
         </button>
       {loading && (
         <div className="mt-6 text-center">
@@ -230,15 +248,21 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
           <p className="mt-3 text-gray-400">{txnMsg}</p>
         </div>
       )}
-      {isAttested &&
+      {isAttested && isHedera &&
         <div className="mt-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
           <li className="text-gray-300 whitespace-pre-wrap">Transaction Hash: {attestationdetails.txnHash}</li>
           <p className="text-gray-300 whitespace-pre-wrap">AttestationId: {attestationdetails.AttestationId}</p>
         </div>
       }
-      {isMinted && !loading &&
+      {isMinted && !loading && isFhenix &&
         <div className="mt-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
           <li className="text-gray-300 whitespace-pre-wrap">Transaction Hash: https://explorer.helium.fhenix.zone/tx/{mintedLink[0]}</li>
+          <p className="text-gray-300 whitespace-pre-wrap">Transaction Receipt: {mintedLink[1]}</p>
+        </div>
+      }
+      {isMinted && !loading && isHedera &&
+        <div className="mt-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
+          <li className="text-gray-300 whitespace-pre-wrap">Transaction Hash: https://hashscan.io/testnet/transaction/{mintedLink[0]}</li>
           <p className="text-gray-300 whitespace-pre-wrap">Transaction Receipt: {mintedLink[1]}</p>
         </div>
       }

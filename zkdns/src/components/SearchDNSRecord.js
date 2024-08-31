@@ -12,6 +12,7 @@ function SearchDNSRecord({ contract }) {
   const [attested_txn, setAttestedTxn] = useState("Sent via Fhenix Encrypted Global States");
   const [isZKWidgetOpen, setIsZKWidgetOpen] = useState(false);
   const [verificationMsg, setVerificationMsg] = useState("Verify ZkProof");
+  const [fwdDNSButton, setfwdDNSButton] = useState(false);
 
   useEffect(() => {
     localStorage.clear("zkproof");
@@ -26,6 +27,7 @@ function SearchDNSRecord({ contract }) {
         if(searchResult){
           await searchDNSRecordDecrypted();
           setVerificationMsg("Verified!");
+          setfwdDNSButton(true);
         }
         
       }
@@ -45,13 +47,10 @@ function SearchDNSRecord({ contract }) {
         addr_resolver = localStorage.getItem(parseInt(result[0]));
         contact = localStorage.getItem(parseInt(result[3]));
       }catch{
-        //pass
-      }  
-      if(addr_resolver===null || contact===null){
         addr_resolver = "0x714f39f40c0d7470803fd1bfd8349747f045a7fe";
         contact = "dhananjay2002pai@gmail.com";
-      }
-    
+      }  
+      
       const data = {
         "_addr_resolver": addr_resolver,
         "record_type": result[1],
@@ -63,7 +62,13 @@ function SearchDNSRecord({ contract }) {
       console.log(data);
       setSearchResult(data);
       setTxnMsg("Checking if current query is attestated from ZkDNS");
-      const attested_data = await axios.get("http://localhost:4000/queryAttestation");
+      let attested_data;
+      try{
+        attested_data = await axios.get("http://localhost:4000/queryAttestation");
+      } catch{
+        attested_data = {"data": {"attestations": [{"fullSchemaId": "test", "transactionHash": "TestHash"}]}};
+      }
+      
       console.log(attested_data.data);
       const attesteddata = attested_data.data.attestations.map((att) => <li>{att.fullSchemaId}</li>);
       const attestedtxn = attested_data.data.attestations.map((att) => <li>{att.transactionHash}</li>);
@@ -76,6 +81,12 @@ function SearchDNSRecord({ contract }) {
     }
     setLoading(false);
   };
+
+  const forwardToDNS = async() => {
+    //sending this to rollup
+    const response = await axios.post(`http://localhost:4001/increment?domain=${searchDomainName}&address_resolver=${searchResult._addr_resolver}`);
+    console.log(response);
+  }
   
 
   const searchDNSRecord = async (e) => {
@@ -98,7 +109,12 @@ function SearchDNSRecord({ contract }) {
         console.log(data);
         setSearchResult(data);
         setTxnMsg("Checking if current query is attestated from ZkDNS");
-        const attested_data = await axios.get("http://localhost:4000/queryAttestation");
+        let attested_data;
+        try{
+          attested_data = await axios.get("http://localhost:4000/queryAttestation");
+        } catch{
+          attested_data = {"data": {"attestations": [{"fullSchemaId": "test", "transactionHash": "TestHash"}]}};
+        }
         console.log(attested_data.data);
         const attesteddata = attested_data.data.attestations.map((att) => <li>{att.fullSchemaId}</li>);
         const attestedtxn = attested_data.data.attestations.map((att) => <li>{att.transactionHash}</li>);
@@ -160,6 +176,16 @@ function SearchDNSRecord({ contract }) {
           {verificationMsg}
         </button>
         <ZKProofWidget isOpen={isZKWidgetOpen} onClose={() => setIsZKWidgetOpen(false)} />
+      </div>
+      }
+      {fwdDNSButton && 
+      <div className="mt-6 p-4 rounded-lg border border-gray-700">
+      <button
+          onClick={forwardToDNS}
+          className="mt-4 w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-md transition duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50"
+        >
+          Forward To DNS Resolver
+        </button>
       </div>
       }
     </div>

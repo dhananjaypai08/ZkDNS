@@ -19,7 +19,7 @@ const ZKProofWidget = ({ isOpen, onClose }) => {
       setMessage(res.data["message"]);
       res = await axios.get('http://localhost:8000/generate_proof');
       setMessage(res.data["message"]);
-      res = await axios.get('http://localhost:8000/verify_proof');
+      res = await axios.get(`http://localhost:8000/verify_proof?contact=${contact}`);
       setMessage(`${res.data["message"]}`);
       setContact("");
       if(res.data["message"] == "Proof verified!"){

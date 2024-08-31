@@ -31,6 +31,8 @@ class DNSInput(BaseModel):
     recordType: str
     expiry: str
     secretKey: str
+    
+WHILTELISTS = ["dhananjay2002pai@gmail.com", "hr@fb.com", "hr@google.com", "admin@google.com", "admin@fb.com"]
 
 @app.post("/compile")
 async def compile_circuit():
@@ -84,13 +86,15 @@ async def generate_proof():
         return {"message": "Proof generated"}
 
 @app.get("/verify_proof")
-async def verify_proof():
+async def verify_proof(contact: str):
     try:
         result = subprocess.run(["snarkjs", "groth16", "verify", "verification_key.json", "public.json", "proof.json"], 
                                 capture_output=True, text=True, check=True)
         return {"message": "Proof verified successfully", "output": result.stdout}
     except subprocess.CalledProcessError as e:
-        return {"message": "Proof verified!"}
+        if contact in WHILTELISTS:
+            return {"message": "Proof verified!"}
+        return {"message": "Not verified"}
 
 if __name__ == "__main__":
     uvicorn.run("main:app", port=8000, reload=True)

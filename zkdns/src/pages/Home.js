@@ -5,7 +5,8 @@ import Landing from './Landing';
 import AddDNSRecord from '../components/AddDNSRecord';
 import SearchDNSRecord from '../components/SearchDNSRecord';
 import TopicMessages from '../components/TopicMessages';
-import abi from "../contracts/ZKDNSFhenix.json";
+import abiFhenix from "../contracts/ZKDNSFhenix.json";
+import abiHedera from "../contracts/ZKDNS.json";
 import { createWeb3Modal, defaultConfig } from '@web3modal/ethers/react';
 import { useWeb3ModalProvider, useWeb3ModalAccount, useDisconnect, useWeb3ModalTheme, useWeb3Modal } from '@web3modal/ethers/react';
 
@@ -13,10 +14,10 @@ import { useWeb3ModalProvider, useWeb3ModalAccount, useDisconnect, useWeb3ModalT
 const projectId = 'a7a2557c75d9558a9c932d5f99559799';
 
 const testnet1 = {
-  chainId: 2442,
+  chainId: 296,
   name: 'Hedera Testnetwork',
   currency: 'HBAR',
-  explorerUrl: 'https://testnet.hashscan.io/',
+  // explorerUrl: 'https://testnet.hashscan.io/',
   rpcUrl: 'https://testnet.hashio.io/api'
 };
 
@@ -75,11 +76,18 @@ function Home() {
           const ethersProvider = new ethers.BrowserProvider(walletProvider);
           const network = await ethersProvider.getNetwork();
           
-          if (network.chainId !== BigInt(desiredChainId)) {
-            // You may want to prompt the user to switch networks here
-            console.log("Please switch to the correct network");
-            setLoading(false);
-            return;
+          // if (network.chainId !== BigInt(desiredChainId)) {
+          //   // You may want to prompt the user to switch networks here
+          //   console.log("Please switch to the correct network");
+          //   setLoading(false);
+          //   return;
+          // }
+          let abi;
+          console.log(network.chainId, parseInt(network.chainId) === 296);
+          if(parseInt(network.chainId) == 296){
+            abi = abiHedera;
+          } else{
+            abi = abiFhenix;
           }
 
           const signer = await ethersProvider.getSigner();

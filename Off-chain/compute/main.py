@@ -6,6 +6,12 @@ from fastapi import FastAPI, Request, Response, Body
 from fastapi.middleware.cors import CORSMiddleware
 import json
 import uvicorn
+# DNS and ENS imports 
+import dns.message
+import dns.query
+import dns.resolver
+import dns
+
 
 load_dotenv()
 
@@ -14,7 +20,7 @@ app = FastAPI()
 
 origins = [
     "http://localhost",
-    "http://localhost:8001",
+    "http://localhost:8002",
     "http://localhost:8000",
     "http://localhost:3000",
     "*"
@@ -40,6 +46,17 @@ print(RPC_PROVIDER_URL)
 w3 = Web3(Web3.HTTPProvider(RPC_PROVIDER_URL))
 zkdns_contract = w3.eth.contract(address=contract_address, abi=contract_abi)
 
+# ABI for the ENS Resolver contract
+RESOLVER_ABI = json.loads('[{"inputs":[{"internalType":"bytes32","name":"node","type":"bytes32"}],"name":"addr","outputs":[{"internalType":"address payable","name":"","type":"address"}],"stateMutability":"view","type":"function"}]')
+# def setup_web3_and_ens():
+#     # Connect to an Ethereum node (replace with your own node URL)
+#     w3 = Web3(Web3.HTTPProvider('https://mainnet.infura.io/v3/YOUR-PROJECT-ID'))
+    
+#     # Initialize ENS
+#     ns = ENS.fromWeb3(w3)
+    
+#     return w3, ns
+
 private_key = os.environ.get('PRIVATE_KEY')
 account_from = {
     'private_key': private_key,
@@ -48,8 +65,6 @@ account_from = {
 account = w3.eth.account.from_key(private_key)
 # print('gas estimated')
 # print(w3.eth.estimate_gas())
-print('nonce')
-print(w3.eth.get_transaction_count(account_from['address']))
 
 @app.post("/addDNS")
 async def home(request: Request):
@@ -102,6 +117,34 @@ async def home(request: Request):
         print(e)
         return e
     
+@app.get("/forwardToResolver")
+def forward_to_dns_resolver(domain: str, address_resolver: str, resolver_port=53):
+    # Create a new DNS query message
+    print(domain, address_resolver)
+    query = dns.message.make_query(domain, dns.rdatatype.A)
+
+    try:
+        # Send the query to the DNS resolver
+        response = dns.query.udp(query, address_resolver, port=resolver_port, timeout=5)
+
+        # Check if we got a valid response
+        if response.rcode() == dns.rcode.NOERROR:
+            # Extract the IP addresses from the answer section
+            ip_addresses = []
+            for answer in response.answer:
+                for item in answer.items:
+                    if item.rdtype == dns.rdatatype.A:
+                        ip_addresses.append(item.address)
+            
+            return ip_addresses
+        else:
+            return f"DNS query failed with response code: {dns.rcode.to_text(response.rcode())}"
+
+    except dns.exception.Timeout:
+        return "DNS query timed out"
+    except Exception as e:
+        return f"An error occurred: {str(e)}"
+    
     
 if __name__ == "__main__":
-    uvicorn.run("main:app", reload=True, log_level="info")   
+    uvicorn.run("main:app", port=8002, reload=True, log_level="info")   
