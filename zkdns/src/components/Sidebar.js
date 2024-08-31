@@ -6,7 +6,7 @@ function Sidebar({ activeTab, setActiveTab }) {
     { id: 'home', name: 'Home' },
     { id: 'add', name: 'Add DNS Record' },
     { id: 'search', name: 'Search DNS Record' },
-    { id: 'zkproof', name: 'ZK Proof' },
+    { id: 'topicmessages', name: 'Hedera Mirror node"s minting Messages' },
   ];
 
   return (

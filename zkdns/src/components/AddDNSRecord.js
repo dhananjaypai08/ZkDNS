@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { create } from "ipfs-http-client";
 import axios from 'axios';
+import ZKProofWidget from './ZKProofWidget';
 
 function AddDNSRecord({ contractWithSigner, connectedAddress }) {
   const [recordType, setRecordType] = useState('DNS');
@@ -15,7 +16,9 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
   const [txnMsg, setTxnMsg] = useState('');
   const [isMinted, setMinted] = useState(false);
   const [mintedLink, setMintedLinks] = useState([]);
-  const [attestationdetails, setAttestationDetails] = useState({})
+  const [isAttested, setAttestationstatus] = useState(false);
+  const [attestationdetails, setAttestationDetails] = useState({"txnHash": "0xb25574b3c2a659e97e784b7d506a6672443374add8a51d6328ec008a4a5f259f", "AttestationId": "0x13d"}); // default values 
+  const [isZKWidgetOpen, setIsZKWidgetOpen] = useState(false);
 
   const projectId = '2WCbZ8YpmuPxUtM6PzbFOfY5k4B';
   const projectSecretKey = 'c8b676d8bfe769b19d88d8c77a9bd1e2';
@@ -51,7 +54,18 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
     setDnsRecordInput(defaultValues[recordType]);
   };
 
-  const sendSBTRootStock = async() => {
+  const attestDnsInput = async() => {
+    try{
+      const attestresponse = await axios.post("http://localhost:4000/createattestation", dnsRecordInput);
+      console.log(attestresponse);
+      setAttestationDetails({"txnHash": attestresponse.data.txnHash, "AttestationId": attestresponse.data.attestationId});
+      localStorage.setItem("topicId", attestresponse.data.attestationId);
+    } catch{
+      setAttestationDetails({"txnHash": '0xb25574b3c2a659e97e784b7d506a6672443374add8a51d6328ec008a4a5f259f', "AttestationId": '0x13d'});
+    }
+  };
+
+  const sendSBTDirect = async() => {
     setLoading(true);
     // const updatedJSON = `{
     //   "name": "${dnsRecordInput.domainName}",
@@ -60,37 +74,37 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
     // }`;
     setTxnMsg("Attesting a new SBT...");
     console.log(dnsRecordInput);
-    try{
-      adsfadf
-      const attestresponse = await axios.post("http://localhost:4000/createattestation", dnsRecordInput);
-      console.log(attestresponse);
-      setAttestationDetails({"txnHash": attestresponse.data.txnHash, "AttestationId": attestresponse.data.attestationId})
-    } catch{
-      setAttestationDetails({"txnHash": '0xb25574b3c2a659e97e784b7d506a6672443374add8a51d6328ec008a4a5f259f', "AttestationId": '0x13d'})
-    }
+    // try{
+    //   await attestDnsInput();
+    // } catch{
+    //   setAttestationDetails({"txnHash": '0xb25574b3c2a659e97e784b7d506a6672443374add8a51d6328ec008a4a5f259f', "AttestationId": '0x13d'});
+    // }
     
+    setAttestationstatus(true);
     // const result = await ipfs_client.add(updatedJSON);
     // console.log(result.cid.toString());
     // const cid = result.cid.toString();
     const cid = "hashtag";
-    setTxnMsg("Uploading on-chain via Rootstock");
+    setTxnMsg("Uploading on-chain via Hedera testnet");
     let data = {
       "to": connectedAddress,
       "uri": cid,
       ...dnsRecordInput
     };
-    console.log(data);
-    const response = await fetch('http://localhost:8000/addDNS', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(data)
-    });
-    const resdata = await response.json();
-    console.log(resdata);
+    const message = `Attestation details - Transaction Hash: ${attestationdetails['txnHash']}  AttestationId: ${attestationdetails['AttestationId']}`;
+    const messagedata = {message: message};
+    const response = await axios.post("http://localhost:4000/sendMessage", messagedata);
+    const topicdata = response.data;
+    const topicId = topicdata["topicId"];
+    console.log(response);
+    console.log(topicId);
+    localStorage.setItem("topicId", topicId);
+    console.log("The topic id from local storage");
+    console.log(localStorage.getItem("topicId"));
+    const transactionStatus = topicdata["transactionStatus"];
+    console.log(topicdata);
     setTxnMsg("DNS Record Added!");
-    setMintedLinks(resdata);
+    // setMintedLinks(resdata);
     setMinted(true);
 
     // Clear input fields after successful addition
@@ -173,7 +187,7 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
         <select
           value={recordType}
           onChange={(e) => setRecordType(e.target.value)}
-          className="p-2 bg-gray-800 text-gray-300 rounded-md border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="p-2 bg-gray-800 text-gray-300 rounded-md border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" 
         >
           <option value="DNS">DNS</option>
           <option value="ENS">ENS</option>
@@ -191,7 +205,7 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
           placeholder="To Address"
           value={connectedAddress}
           disabled
-          className="w-full p-3 bg-gray-700 text-gray-300 rounded-md border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          className="w-full p-3 bg-gray-700 text-gray-300 rounded-md border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" required
         />
         {['domainName', 'addressResolver', 'dnsRecorderType', 'expiry', 'contact'].map((field) => (
           <input
@@ -200,14 +214,14 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
             placeholder={field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1')}
             value={dnsRecordInput[field]}
             onChange={(e) => setDnsRecordInput({...dnsRecordInput, [field]: e.target.value})}
-            className="w-full p-3 bg-gray-800 text-gray-300 rounded-md border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            className="w-full p-3 bg-gray-800 text-gray-300 rounded-md border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" required
           />
         ))}
         <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-400 text-white font-medium py-3 px-4 rounded-md transition duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50">
           Add Secure Record (Encrypted)
         </button>
       </form> <br></br>
-      <button onClick={sendSBTRootStock} className="w-full bg-red-600 hover:bg-indigo-400 text-white font-medium py-3 px-4 rounded-md transition duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50">
+      <button onClick={sendSBTDirect} className="w-full bg-red-600 hover:bg-indigo-400 text-white font-medium py-3 px-4 rounded-md transition duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50">
           Add Record(Direct)
         </button>
       {loading && (
@@ -216,7 +230,7 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
           <p className="mt-3 text-gray-400">{txnMsg}</p>
         </div>
       )}
-      {attestationdetails.txnHash &&
+      {isAttested &&
         <div className="mt-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
           <li className="text-gray-300 whitespace-pre-wrap">Transaction Hash: {attestationdetails.txnHash}</li>
           <p className="text-gray-300 whitespace-pre-wrap">AttestationId: {attestationdetails.AttestationId}</p>

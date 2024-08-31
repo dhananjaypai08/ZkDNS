@@ -5,7 +5,25 @@ require('dotenv').config();
 const { privateKeyToAccount } = require("viem/accounts");
 const axios = require("axios");
 const ethers = require("ethers");
+const {
+  AccountId,
+  PrivateKey,
+  Client,
+  TopicCreateTransaction,
+  TopicMessageQuery,
+  TopicMessageSubmitTransaction,
+} = require("@hashgraph/sdk");
 
+// Grab the OPERATOR_ID and OPERATOR_KEY from the .env file
+const myAccountId = process.env.MY_ACCOUNT_ID;
+const myPrivateKey = process.env.HEDERA_PRIVATE_KEY;
+
+// Build Hedera testnet and mirror node client
+const Hederaclient = Client.forTestnet();
+let TopicID = "0.0.4790189"; // Initial default value
+
+// Set the operator account ID and operator private key
+Hederaclient.setOperator(myAccountId, myPrivateKey);
 
 const app = express();
 
@@ -141,6 +159,81 @@ app.post('/createschema', async(req, res) => {
     console.log(response);
     res.json(response);
 });
+
+
+app.post("/createTopic", async(req, res) => {
+  // Retrieve user data from your database or data source
+  // Create a new topic
+  let txResponse = await new TopicCreateTransaction().execute(Hederaclient);
+
+  // Grab the newly generated topic ID
+  let receipt = await txResponse.getReceipt(Hederaclient);
+  let topicIdnew = receipt.topicId;
+  console.log(`Your topic ID is: ${topicIdnew}`);
+  TopicID = topicIdnew;
+  console.log(TopicID.toString());
+  res.json(topicIdnew);
+});
+
+
+async function submitFirstMessage(message) {
+  
+  let txResponse = await new TopicCreateTransaction().execute(Hederaclient);
+
+  // Grab the newly generated topic ID
+  let receipt = await txResponse.getReceipt(Hederaclient);
+  let giventopicId = receipt.topicId;
+  console.log(`Your topic ID is: ${giventopicId}`);
+  TopicID = giventopicId;
+  console.log(TopicID.toString());
+
+  // Wait 5 seconds between consensus topic creation and subscription creation
+  await new Promise((resolve) => setTimeout(resolve, 5000));
+
+  // Create the topic
+  new TopicMessageQuery()
+    .setTopicId(giventopicId)
+    .subscribe(Hederaclient, null, (message) => {
+      let messageAsString = Buffer.from(message.contents, "utf8").toString();
+      console.log(
+        `${message.consensusTimestamp.toDate()} Received: ${messageAsString}`
+      );
+    });
+
+  // Send message to topic
+  let sendResponse = await new TopicMessageSubmitTransaction({
+    topicId: giventopicId,
+    message: message,
+  }).execute(Hederaclient);
+  const getReceipt = await sendResponse.getReceipt(Hederaclient);
+
+  // Get the status of the transaction
+  const transactionStatus = getReceipt.status;
+  
+  console.log("The message transaction status: " + transactionStatus.toString());
+  return {"transactionStatus": transactionStatus.toString(), "topicId": giventopicId.toString()};
+}
+
+app.post('/sendMessage', async(req, res) => {
+  // Retrieve user data from your database or data source
+  const message = req.body.message;
+  console.log(message);
+  const response = await submitFirstMessage(message);
+  console.log(response);
+  res.json(response);
+});
+
+app.get('/getMessages', async(req, res) => {
+  // Retrieve user data from your database or data source
+  let topicIdgiven = req.params.topicId;
+  console.log(topicIdgiven)
+  const url = `https://testnet.mirrornode.hedera.com/api/v1/topics/${topicIdgiven}/messages`;
+  const response = await fetch(url);
+  const data = await response.json();
+  console.log(data["messages"]);
+  res.json(data["messages"]);
+});
+
 
 // async function createNotaryAttestation(domain_name, address_resolver, recorder_type, expiry, contact) {
 //     let address = "0x878c92FD89d8E0B93Dc0a3c907A2adc7577e39c5"; // Alice's address. Will need Alice's account to send the tx.

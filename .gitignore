@@ -3,7 +3,7 @@ Off-chain/env/
 zkdns/node_modules/
 Off-chain/Rootstock/.env
 Off-chain/Rootstock/__pycache__/
-attestations/node_modules/
+Signattestations/node_modules/
 proofs/src/__pycache__/
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 

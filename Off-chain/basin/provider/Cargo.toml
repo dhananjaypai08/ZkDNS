@@ -1,0 +1,41 @@
+[package]
+name = "adm_provider"
+description = "A chain and object provider for the ADM."
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+readme.workspace = true
+repository.workspace = true
+keywords.workspace = true
+version.workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+async-trait = { workspace = true }
+base64 = { workspace = true }
+bytes = { workspace = true }
+cid = { workspace = true }
+ethers = { workspace = true }
+num-traits = { workspace = true }
+prost = { workspace = true }
+serde = { workspace = true }
+tendermint = { workspace = true }
+tendermint-rpc = { workspace = true }
+tendermint-proto = { workspace = true }
+tracing = { workspace = true }
+reqwest = { workspace = true }
+tokio = { workspace = true }
+tokio-stream = { workspace = true }
+futures-util = { workspace = true }
+
+fvm_ipld_encoding = { workspace = true }
+fvm_shared = { workspace = true }
+
+fendermint_vm_actor_interface = { workspace = true }
+fendermint_vm_message = { workspace = true }
+
+ipc-api = { workspace = true }
+
+[dev-dependencies]
+serde_json = { workspace = true }

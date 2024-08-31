@@ -1,0 +1,34 @@
+[package]
+name = "adm_signer"
+description = "A transaction signer for the ADM."
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+readme.workspace = true
+repository.workspace = true
+keywords.workspace = true
+version.workspace = true
+
+[dependencies]
+anyhow = { workspace = true }
+async-trait = { workspace = true }
+fnv = { workspace = true }
+hex = { workspace = true }
+rand = { workspace = true }
+tokio = { workspace = true }
+
+fvm_ipld_encoding = { workspace = true }
+fvm_shared = { workspace = true }
+
+fendermint_crypto = { workspace = true }
+fendermint_vm_actor_interface = { workspace = true }
+fendermint_vm_message = { workspace = true }
+tendermint-rpc = { workspace = true }
+
+ipc-api = { workspace = true }
+
+adm_provider = { path = "../provider" }
+
+[dev-dependencies]
+serde_json = { workspace = true }

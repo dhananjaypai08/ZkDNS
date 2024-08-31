@@ -1,0 +1,48 @@
+[package]
+name = "adm_cli"
+description = "A command line interface (CLI) for the ADM."
+authors.workspace = true
+edition.workspace = true
+homepage.workspace = true
+license.workspace = true
+readme.workspace = true
+repository.workspace = true
+keywords.workspace = true
+version.workspace = true
+
+[[bin]]
+name = "adm"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = { workspace = true }
+bytes = { workspace = true }
+cid = { workspace = true }
+clap = { workspace = true }
+clap-stdin = { workspace = true }
+ethers = { workspace = true }
+hex = { workspace = true }
+humantime = { workspace = true }
+reqwest = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true, features = ["preserve_order"] }
+stderrlog = { workspace = true }
+tokio = { workspace = true }
+tokio-util = { workspace = true }
+tracing = { workspace = true }
+
+tendermint-rpc = { workspace = true }
+
+fvm_shared = { workspace = true }
+fvm_ipld_encoding = { workspace = true }
+
+fendermint_actor_accumulator = { workspace = true }
+fendermint_actor_machine = { workspace = true }
+fendermint_actor_objectstore = { workspace = true }
+fendermint_crypto = { workspace = true }
+fendermint_vm_actor_interface = { workspace = true }
+fendermint_vm_message = { workspace = true }
+
+adm_provider = { path = "../provider" }
+adm_sdk = { path = "../sdk" }
+adm_signer = { path = "../signer" }
