@@ -13,6 +13,7 @@ function SearchDNSRecord({ contract }) {
   const [isZKWidgetOpen, setIsZKWidgetOpen] = useState(false);
   const [verificationMsg, setVerificationMsg] = useState("Verify ZkProof");
   const [fwdDNSButton, setfwdDNSButton] = useState(false);
+  const [final_ip, setFinalIP] = useState("Please verify and then click on DNS Resolver");
 
   useEffect(() => {
     localStorage.clear("zkproof");
@@ -84,8 +85,9 @@ function SearchDNSRecord({ contract }) {
 
   const forwardToDNS = async() => {
     //sending this to rollup
-    const response = await axios.post(`http://localhost:4001/increment?domain=${searchDomainName}&address_resolver=${searchResult._addr_resolver}`);
+    const response = await axios.get(`http://localhost:8002/forwardToResolver?domain=${searchDomainName}&address_resolver=${searchResult._addr_resolver}`);
     console.log(response);
+    setFinalIP(response.data);
   }
   
 
@@ -164,6 +166,9 @@ function SearchDNSRecord({ contract }) {
           <div className="mt-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
             <p className="mb-2 text-gray-300">Attestations:</p>{attested_data}<br></br>
             <p className="mb-2 text-gray-300">Txn Hash:</p>{attested_txn}
+          </div>
+          <div className="mt-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
+            <p className="mb-2 text-gray-300">Source IP of {searchDomainName}: {final_ip}</p>
           </div>
         </div>
       )}

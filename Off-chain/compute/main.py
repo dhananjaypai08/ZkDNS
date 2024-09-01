@@ -11,6 +11,7 @@ import dns.message
 import dns.query
 import dns.resolver
 import dns
+from envioClient import getClient, runQueryBlockData, runQueryLogsData, runQueryTxn, runQueryBlocksTxns
 
 
 load_dotenv()
@@ -34,6 +35,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+NETWORK_URLS = {"Chillz": ["https://chiliz.hypersync.xyz", 8888], 
+                "Fhenix": ["https://fhenix-testnet.hypersync.xyz", 42069],
+                "Galadriel": ["https://galadrial-devnet.hypersync.xyz", 696969],
+                }
+
 file = open(contract.abi_path)
 data = json.load(file)
 file.close()
@@ -46,81 +52,19 @@ print(RPC_PROVIDER_URL)
 w3 = Web3(Web3.HTTPProvider(RPC_PROVIDER_URL))
 zkdns_contract = w3.eth.contract(address=contract_address, abi=contract_abi)
 
-# ABI for the ENS Resolver contract
-RESOLVER_ABI = json.loads('[{"inputs":[{"internalType":"bytes32","name":"node","type":"bytes32"}],"name":"addr","outputs":[{"internalType":"address payable","name":"","type":"address"}],"stateMutability":"view","type":"function"}]')
-# def setup_web3_and_ens():
-#     # Connect to an Ethereum node (replace with your own node URL)
-#     w3 = Web3(Web3.HTTPProvider('https://mainnet.infura.io/v3/YOUR-PROJECT-ID'))
-    
-#     # Initialize ENS
-#     ns = ENS.fromWeb3(w3)
-    
-#     return w3, ns
-
 private_key = os.environ.get('PRIVATE_KEY')
 account_from = {
     'private_key': private_key,
     'address': w3.eth.account.from_key(private_key).address
 }
 account = w3.eth.account.from_key(private_key)
-# print('gas estimated')
-# print(w3.eth.estimate_gas())
-
-@app.post("/addDNS")
-async def home(request: Request):
-    body = await request.json()
-    to, uri, domain_name, addressResolver, dnstype, expiry, contact = body["to"], body["uri"], body["domainName"], body["addressResolver"], body["dnsRecorderType"], body["expiry"], body["contact"]
-    print(body)
-    to = w3.to_checksum_address(to)
-    nonce = w3.eth.get_transaction_count(account_from['address'])
-    gasprice = w3.eth.gas_price
-    print(to, nonce, gasprice)
-    
-    # Build the transaction
-    transaction = zkdns_contract.functions.safeMint(to, uri, domain_name, addressResolver, dnstype, expiry, contact).build_transaction({
-        'from': w3.eth.account.from_key(private_key).address,
-        'gasPrice': w3.to_wei("20", "gwei"),
-        'gas': 20000000,
-        'nonce': nonce,
-    })
-    
-    print('transaction built')
-    print(transaction)
-    # Sign the transaction
-    signed_txn = w3.eth.account.sign_transaction(transaction, account_from['private_key'])
-    hash = w3.to_hex(w3.keccak(signed_txn.raw_transaction))
-    print('signed transaction hash')
-    print(hash)
-    # Send the transaction
-    txn_hash = w3.eth.send_raw_transaction(signed_txn.raw_transaction)
-    try:
-        print(txn_hash)
-        # txn_hash_hex = txn_hash.hex()
-        # print("Transaction Hash:", txn_hash.hex())
-    except Exception as e:
-        print(e)
-    try:
-        txn_receipt = w3.eth.wait_for_transaction_receipt(txn_hash)
-        print(txn_receipt.status)
-        print("Transaction Receipt:", txn_receipt)
-        #print(txn_hash_hex, txn_receipt.blockHash.hex())
-        transaction_details = {
-            "transaction_hash": txn_hash.hex(),
-            "block_hash": txn_receipt.blockHash.hex(),
-            "status": txn_receipt.status,
-            "gas_used": txn_receipt.gasUsed,
-            "block_number": txn_receipt.blockNumber
-        }
-        
-        return transaction_details
-    except Exception as e:
-        print(e)
-        return e
     
 @app.get("/forwardToResolver")
 def forward_to_dns_resolver(domain: str, address_resolver: str, resolver_port=53):
     # Create a new DNS query message
     print(domain, address_resolver)
+    if not address_resolver or address_resolver=="null":
+        address_resolver = "8.8.8.8" #default
     query = dns.message.make_query(domain, dns.rdatatype.A)
 
     try:
@@ -145,6 +89,49 @@ def forward_to_dns_resolver(domain: str, address_resolver: str, resolver_port=53
     except Exception as e:
         return f"An error occurred: {str(e)}"
     
+@app.get("/getEnvioblockdata")
+async def getEnvioData(network: str):
+    # Get all the Envio data from the given network : Fhenix, Galadriel and Chillz
+    networkdetails = NETWORK_URLS.get(network)
+    print(w3.eth.block_number)
+    if not networkdetails: return "Please provide a valid network name"
+    url, chainId = networkdetails
+    client = getClient(url)
+    response = await runQueryBlockData(client=client)
+    return response
+
+@app.get("/getLogsEvent")
+async def getLogs(network: str):
+    contract = "0xb5ddC78A82227C25864F269a0fc58d4166AA26b0"
+    networkdetails = NETWORK_URLS.get(network)
+    if not networkdetails: return "Please provide a valid network name"
+    url, chainId = networkdetails
+    client = getClient(url)
+    response = await runQueryLogsData(client=client, contract=contract)
+    print(response)
+    return response 
+
+@app.get("/getBlockTransactions")
+async def getLogs(network: str):
+    networkdetails = NETWORK_URLS.get(network)
+    if not networkdetails: return "Please provide a valid network name"
+    url, chainId = networkdetails
+    client = getClient(url)
+    response = await runQueryBlocksTxns(client=client)
+    print(response)
+    return response 
+
+@app.get("/getTxnEvents")
+async def getLogstxn(network: str):
+    txn_hash = "0x0ce59482a47c367c57e2dc14d559990af9cb1aef86ff1af726cee9e75c1c2827"
+    networkdetails = NETWORK_URLS.get(network)
+    if not networkdetails: return "Please provide a valid network name"
+    url, chainId = networkdetails
+    client = getClient(url)
+    response = await runQueryTxn(client=client, txn_hash=txn_hash)
+    print(response)
+    return response 
     
+
 if __name__ == "__main__":
     uvicorn.run("main:app", port=8002, reload=True, log_level="info")   
