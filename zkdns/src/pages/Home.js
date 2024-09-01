@@ -5,6 +5,7 @@ import Landing from './Landing';
 import AddDNSRecord from '../components/AddDNSRecord';
 import SearchDNSRecord from '../components/SearchDNSRecord';
 import TopicMessages from '../components/TopicMessages';
+import SSVMetrics from '../components/SSVMetrics';
 import abiFhenix from "../contracts/ZKDNSFhenix.json";
 import abiHedera from "../contracts/ZKDNS.json";
 import { createWeb3Modal, defaultConfig } from '@web3modal/ethers/react';
@@ -137,6 +138,7 @@ function Home() {
         {activeTab === 'add' && <AddDNSRecord contractWithSigner={contractWithSigner} connectedAddress={address} />}
         {activeTab === 'search' && <SearchDNSRecord contract={contract} />}
         {activeTab === 'topicmessages' && <TopicMessages topicId="0.0.4790189" />}
+        {activeTab === 'ssvmetrics' && <SSVMetrics />}
 
         {loading && (
           <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center">

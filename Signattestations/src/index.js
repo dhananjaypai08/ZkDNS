@@ -238,6 +238,15 @@ app.get('/getMessages', async(req, res) => {
   res.json(data["messages"]);
 });
 
+app.post('/getSSVdata', async(req, res) =>{
+  let ssvquery = req.body.query;
+  console.log(ssvquery);
+  const url = "https://api.studio.thegraph.com/proxy/71118/ssv-network-holesky/version/latest";
+  const response = await axios.post(url, JSON.stringify({ ssvquery }));
+  console.log(response.data);
+  res.json(response.data);
+});
+
 
 // async function createNotaryAttestation(domain_name, address_resolver, recorder_type, expiry, contact) {
 //     let address = "0x878c92FD89d8E0B93Dc0a3c907A2adc7577e39c5"; // Alice's address. Will need Alice's account to send the tx.

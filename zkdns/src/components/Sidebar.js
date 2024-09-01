@@ -7,6 +7,7 @@ function Sidebar({ activeTab, setActiveTab }) {
     { id: 'add', name: 'Add DNS Record' },
     { id: 'search', name: 'Search DNS Record' },
     { id: 'topicmessages', name: 'Hedera Mirror node"s minting Messages' },
+    { id: 'ssvmetrics', name: 'SSV Metrics' },
   ];
 
   return (
