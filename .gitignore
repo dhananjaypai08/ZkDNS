@@ -1,11 +1,12 @@
 proofs/env/
 Off-chain/env/
 zkdns/node_modules/
-Off-chain/Rootstock/.env
-Off-chain/Rootstock/__pycache__/
+Off-chain/basin/
+Off-chain/compute/__pycache__/
+Off-chain/compute/.env
+Off-chain/compute/__pycache__/
 Signattestations/node_modules/
 proofs/src/__pycache__/
-off-chain/compute/__pycache__/
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies

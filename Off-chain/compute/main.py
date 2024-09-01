@@ -49,7 +49,7 @@ contract_address = data["address"]
 RPC_PROVIDER_APIKEY = os.environ.get('RPC_PROVIDER_APIKEY')
 RPC_PROVIDER_URL = 'https://rpc.testnet.rootstock.io/' + RPC_PROVIDER_APIKEY
 print(RPC_PROVIDER_URL)
-w3 = Web3(Web3.HTTPProvider(RPC_PROVIDER_URL))
+w3 = Web3(Web3.HTTPProvider(RPC_PROVIDER_APIKEY))
 zkdns_contract = w3.eth.contract(address=contract_address, abi=contract_abi)
 
 private_key = os.environ.get('PRIVATE_KEY')
