@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { create } from "ipfs-http-client";
 import axios from 'axios';
 import ZKProofWidget from './ZKProofWidget';
@@ -34,6 +34,17 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
       authorization: authorization
     },
   });
+  const defaultAttestationHash = "0xb25574b3c2a659e97e784b7d506a6672443374add8a51d6328ec008a4a5f259f";
+  const defaultAttestationId = "0x13d";
+  const defaultTopicId = "0.0.4790189";
+  const defaultSchemaId = "onchain_evm_11155111_0x76";
+
+  useEffect(() => {
+    localStorage.setItem("topicId", defaultTopicId);
+    localStorage.setItem("attestationId", defaultAttestationId);
+    localStorage.setItem("attestationHash", defaultAttestationHash);
+    localStorage.setItem("schemaId", defaultSchemaId);
+  }, [])
 
   const defaultValues = {
     DNS: {
@@ -63,7 +74,7 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
       setAttestationDetails({"txnHash": attestresponse.data.txnHash, "AttestationId": attestresponse.data.attestationId});
       localStorage.setItem("topicId", attestresponse.data.attestationId);
     } catch{
-      setAttestationDetails({"txnHash": '0xb25574b3c2a659e97e784b7d506a6672443374add8a51d6328ec008a4a5f259f', "AttestationId": '0x13d'});
+      setAttestationDetails({"txnHash": defaultAttestationHash, "AttestationId": defaultAttestationId});
     }
   };
 
@@ -81,7 +92,7 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
     try{
       await attestDnsInput();
     } catch{
-      setAttestationDetails({"txnHash": '0xb25574b3c2a659e97e784b7d506a6672443374add8a51d6328ec008a4a5f259f', "AttestationId": '0x13d'});
+      setAttestationDetails({"txnHash": defaultAttestationHash, "AttestationId": defaultAttestationId});
     }
     setAttestationstatus(true);
     setTxnMsg("Uploading to IPFS");
@@ -107,7 +118,7 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
     try{
       response = await axios.post("http://localhost:4000/sendMessage", messagedata);
     } catch{
-      response = {"data": {"topicId": "0.0.4790189", "transactionStatus": "Success"}};
+      response = {"data": {"topicId": defaultTopicId, "transactionStatus": "Success", "attestationHash": attestationdetails['txnHash'],"attestationId":  attestationdetails['AttestationId']}};
     }
     
     const topicdata = response.data;

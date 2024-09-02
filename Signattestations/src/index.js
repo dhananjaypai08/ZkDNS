@@ -1,5 +1,5 @@
 const express = require('express');
-const { SignProtocolClient, SpMode, EvmChains } = require("@ethsign/sp-sdk");
+const { SignProtocolClient, SpMode, EvmChains, IndexService } = require("@ethsign/sp-sdk");
 
 require('dotenv').config();
 const { privateKeyToAccount } = require("viem/accounts");
@@ -17,6 +17,7 @@ const {
 // Grab the OPERATOR_ID and OPERATOR_KEY from the .env file
 const myAccountId = process.env.MY_ACCOUNT_ID;
 const myPrivateKey = process.env.HEDERA_PRIVATE_KEY;
+const sepoliaPrivatekey = process.env.PRIVATE_KEY;
 
 // Build Hedera testnet and mirror node client
 const Hederaclient = Client.forTestnet();
@@ -37,10 +38,11 @@ app.use((req, res, next) => {
 
 const privateKey = process.env.PRIVATE_KEY;
 const account = privateKeyToAccount(privateKey);
-console.log(account, account.address);
+const sepAccount = privateKeyToAccount(sepoliaPrivatekey);
+console.log(account, account.address, sepAccount.address);
 const client = new SignProtocolClient(SpMode.OnChain, {
   chain: EvmChains.sepolia,
-  account: account, // Optional, depending on environment
+  account: sepAccount, // Optional, depending on environment
   transport: "https://sepolia.infura.io/v3/2WCbZ8YpmuPxUtM6PzbFOfY5k4B"
 });
 
@@ -136,10 +138,26 @@ app.post('/createattestation', async(req, res) => {
     const expiry = req.body.expiry;
     const contact = req.body.contact;
     console.log(name, address_resolver, expiry);
-   const response = await createNotaryAttestation(name, address_resolver, recorder_type, expiry, contact);
+    const response = await createNotaryAttestation(name, address_resolver, recorder_type, expiry, contact);
     console.log(response);
     res.json(response);
 });
+
+app.get("/querySchema", async(req, res) => {
+  const schemaId = req.query.id;
+  console.log(schemaId);
+  const indexService = new IndexService("testnet");
+  const response = await indexService.querySchema(schemaId);
+  res.json(response);
+});
+
+app.get("/queryAttestations", async(req, res) => {
+  const schemaId = req.query.id;
+  console.log(schemaId);
+  const indexService = new IndexService("testnet");
+  const response = await indexService.queryAttestation(schemaId);
+  res.json(response);
+})
 
 
 // Used only once for creating schema to store zksbt metadata
