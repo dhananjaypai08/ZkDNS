@@ -32,7 +32,7 @@ async def runQueryBlockData(client=None, logs= LOG_EVENTS, transactions = TRANSA
     query = hypersync.Query(
         # only get block 20224332
 		from_block=229270,
-        to_block=2292975,
+        to_block=229285,
         include_all_blocks=True,
         join_mode=JoinMode.JOIN_ALL,
         field_selection=hypersync.FieldSelection(

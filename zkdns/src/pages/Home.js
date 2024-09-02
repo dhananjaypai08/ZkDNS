@@ -6,10 +6,11 @@ import AddDNSRecord from '../components/AddDNSRecord';
 import SearchDNSRecord from '../components/SearchDNSRecord';
 import TopicMessages from '../components/TopicMessages';
 import SSVMetrics from '../components/SSVMetrics';
+import EnvioMetrics from '../components/EnvioHypersyncDashboard';
 import abiFhenix from "../contracts/ZKDNSFhenix.json";
 import abiHedera from "../contracts/ZKDNS.json";
 import { createWeb3Modal, defaultConfig } from '@web3modal/ethers/react';
-import { useWeb3ModalProvider, useWeb3ModalAccount, useDisconnect, useWeb3ModalTheme, useWeb3Modal } from '@web3modal/ethers/react';
+import { useWeb3ModalProvider, useWeb3ModalAccount, useDisconnect, useWeb3Modal } from '@web3modal/ethers/react';
 
 // Web3Modal configuration
 const projectId = 'a7a2557c75d9558a9c932d5f99559799';
@@ -18,7 +19,6 @@ const testnet1 = {
   chainId: 296,
   name: 'Hedera Testnetwork',
   currency: 'HBAR',
-  // explorerUrl: 'https://testnet.hashscan.io/',
   rpcUrl: 'https://testnet.hashio.io/api'
 };
 
@@ -41,10 +41,10 @@ const ethersConfig = defaultConfig({
   metadata,
   defaultChainId: 11155111,
   auth: {
-    email: true, // default to true
+    email: true,
     socials: ['google', 'x', 'github', 'discord', 'apple', 'facebook', 'farcaster'],
-    showWallets: true, // default to true
-    walletFeatures: true // default to true
+    showWallets: true,
+    walletFeatures: true
   }
 });
 
@@ -77,12 +77,6 @@ function Home() {
           const ethersProvider = new ethers.BrowserProvider(walletProvider);
           const network = await ethersProvider.getNetwork();
           
-          // if (network.chainId !== BigInt(desiredChainId)) {
-          //   // You may want to prompt the user to switch networks here
-          //   console.log("Please switch to the correct network");
-          //   setLoading(false);
-          //   return;
-          // }
           let abi;
           console.log(network.chainId, parseInt(network.chainId) === 296);
           if(parseInt(network.chainId) == 296){
@@ -110,26 +104,11 @@ function Home() {
     setupContract();
   }, [isConnected, walletProvider]);
 
-  // const handleConnectWallet = async () => {
-  //   if (isConnected) {
-  //     await disconnect();
-  //   } else {
-  //     await open();
-  //   }
-  // };
-
   return (
     <div className="flex min-h-screen bg-gray-900 text-gray-100">
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
       <div className="flex-1 p-8">
-      <w3m-button /> 
-      {/* <button
-          onClick={disconnect}
-          className="mb-8 bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-1 px-2 rounded-md transition duration-300 ease-in-out transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50"
-        >
-          {isConnected ? "Disconnect" : "Connect Wallet"}
-        </button> */}
-
+        <w3m-button /> 
         {isConnected && (
           <p className="mb-8 text-gray-400">Connected Address: <span className="font-mono text-indigo-400">{address}</span></p>
         )}
@@ -139,6 +118,7 @@ function Home() {
         {activeTab === 'search' && <SearchDNSRecord contract={contract} />}
         {activeTab === 'topicmessages' && <TopicMessages topicId="0.0.4790189" />}
         {activeTab === 'ssvmetrics' && <SSVMetrics />}
+        {activeTab === 'enviometrics' && <EnvioMetrics />}
 
         {loading && (
           <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center">

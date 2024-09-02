@@ -1,6 +1,7 @@
-// src/components/SearchDNSRecord.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { motion, AnimatePresence } from 'framer-motion';
+import { Search, CheckCircle, XCircle, Loader, Globe, Key } from 'lucide-react';
 import ZKProofWidget from './ZKProofWidget';
 
 function SearchDNSRecord({ contract }) {
@@ -19,18 +20,13 @@ function SearchDNSRecord({ contract }) {
     localStorage.clear("zkproof");
   }, []);
 
-
   useEffect(() => {
     const handleStorageChange = async() => {
       const val = localStorage.getItem("zkproof");
-      console.log(val);
-      if(val){
-        if(searchResult){
-          await searchDNSRecordDecrypted();
-          setVerificationMsg("Verified!");
-          setfwdDNSButton(true);
-        }
-        
+      if(val && searchResult){
+        await searchDNSRecordDecrypted();
+        setVerificationMsg("Verified!");
+        setfwdDNSButton(true);
       }
     };
 
@@ -38,19 +34,12 @@ function SearchDNSRecord({ contract }) {
   }, [isZKWidgetOpen]);
 
   const searchDNSRecordDecrypted = async () => {
+    setLoading(true);
+    setTxnMsg("Decrypting DNS Record...");
     try {
       let result = await contract.getDNS(searchDomainName);
-      console.log(result);
-      console.log(parseInt(result[0]), parseInt(result[3]));
-      let addr_resolver = null;
-      let contact = null;
-      try{
-        addr_resolver = localStorage.getItem(parseInt(result[0]));
-        contact = localStorage.getItem(parseInt(result[3]));
-      }catch{
-        addr_resolver = "0x714f39f40c0d7470803fd1bfd8349747f045a7fe";
-        contact = "dhananjay2002pai@gmail.com";
-      }  
+      let addr_resolver = localStorage.getItem(parseInt(result[0])) || "0x714f39f40c0d7470803fd1bfd8349747f045a7fe";
+      let contact = localStorage.getItem(parseInt(result[3])) || "dhananjay2002pai@gmail.com";
       
       const data = {
         "_addr_resolver": addr_resolver,
@@ -59,47 +48,39 @@ function SearchDNSRecord({ contract }) {
         "contact": contact,
         "tokenuri": result[4],
         "owner": parseInt(result[5].toString())
-      }
-      console.log(data);
+      };
       setSearchResult(data);
-      setTxnMsg("Checking if current query is attestated from ZkDNS");
-      let attested_data;
-      try{
-        attested_data = await axios.get("http://localhost:4000/queryAttestation");
-      } catch{
-        attested_data = {"data": {"attestations": [{"fullSchemaId": "test", "transactionHash": "TestHash"}]}};
-      }
+      setTxnMsg("Checking if current query is attested from ZkDNS");
       
-      console.log(attested_data.data);
-      const attesteddata = attested_data.data.attestations.map((att) => <li>{att.fullSchemaId}</li>);
-      const attestedtxn = attested_data.data.attestations.map((att) => <li>{att.transactionHash}</li>);
-      setAttestedTxn(attestedtxn);
-      setAttestedData(attesteddata);
+      let attested_data = await fetchAttestationData();
+      updateAttestationDisplay(attested_data);
     } catch (error) {
       console.error('Error searching DNS Record:', error);
       setSearchResult(null);
-      
     }
     setLoading(false);
   };
 
   const forwardToDNS = async() => {
-    //sending this to rollup
-    const response = await axios.get(`http://localhost:8002/forwardToResolver?domain=${searchDomainName}&address_resolver=${searchResult._addr_resolver}`);
-    console.log(response);
-    setFinalIP(response.data);
-  }
-  
+    setLoading(true);
+    setTxnMsg("Forwarding to DNS Resolver...");
+    try {
+      const response = await axios.get(`http://localhost:8002/forwardToResolver?domain=${searchDomainName}&address_resolver=${searchResult._addr_resolver}`);
+      setFinalIP(response.data);
+    } catch (error) {
+      console.error('Error forwarding to DNS:', error);
+      setFinalIP("Error resolving DNS");
+    }
+    setLoading(false);
+  };
 
   const searchDNSRecord = async (e) => {
     e.preventDefault();
-    if(verificationMsg !== "Verified!"){
-      setLoading(true);
-      setTxnMsg("Searching Transaction");
-      try {
-        // let result = await contract.getDNS(searchDomainName);
+    setLoading(true);
+    setTxnMsg("Searching Transaction");
+    try {
+      if(verificationMsg !== "Verified!") {
         const result = await contract.getEncryptedDNS(searchDomainName);
-        console.log(result);
         const data = {
           "_addr_resolver": "Unable to showcase address",
           "record_type": result[1],
@@ -107,35 +88,48 @@ function SearchDNSRecord({ contract }) {
           "contact": "Please Verify Proof",
           "tokenuri": result[4],
           "owner": parseInt(result[5].toString())
-        }
-        console.log(data);
+        };
         setSearchResult(data);
-        setTxnMsg("Checking if current query is attestated from ZkDNS");
-        let attested_data;
-        try{
-          attested_data = await axios.get("http://localhost:4000/queryAttestation");
-        } catch{
-          attested_data = {"data": {"attestations": [{"fullSchemaId": "test", "transactionHash": "TestHash"}]}};
-        }
-        console.log(attested_data.data);
-        const attesteddata = attested_data.data.attestations.map((att) => <li>{att.fullSchemaId}</li>);
-        const attestedtxn = attested_data.data.attestations.map((att) => <li>{att.transactionHash}</li>);
-        setAttestedTxn(attestedtxn);
-        setAttestedData(attesteddata);
-      } catch (error) {
-        console.error('Error searching DNS Record:', error);
-        setSearchResult(null);
-        
+      } else {
+        await searchDNSRecordDecrypted();
       }
-      setLoading(false);
-    } else{
-      searchDNSRecordDecrypted();
+      
+      setTxnMsg("Checking if current query is attested from ZkDNS");
+      let attested_data = await fetchAttestationData();
+      updateAttestationDisplay(attested_data);
+    } catch (error) {
+      console.error('Error searching DNS Record:', error);
+      setSearchResult(null);
     }
-    
+    setLoading(false);
+  };
+
+  const fetchAttestationData = async () => {
+    try {
+      return await axios.get("http://localhost:4000/queryAttestation");
+    } catch {
+      return {"data": {"attestations": [{"fullSchemaId": "test", "transactionHash": "TestHash"}]}};
+    }
+  };
+
+  const updateAttestationDisplay = (attested_data) => {
+    const attesteddata = attested_data.data.attestations.map((att, index) => (
+      <li key={index} className="text-emerald-400">{att.fullSchemaId}</li>
+    ));
+    const attestedtxn = attested_data.data.attestations.map((att, index) => (
+      <li key={index} className="text-indigo-400">{att.transactionHash}</li>
+    ));
+    setAttestedTxn(attestedtxn);
+    setAttestedData(attesteddata);
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <motion.div 
+      className="max-w-2xl mx-auto text-gray-300"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
       <h2 className="text-3xl font-bold mb-6 text-indigo-400">Search DNS Record</h2>
       <form onSubmit={searchDNSRecord} className="flex space-x-4 mb-6">
         <input
@@ -143,57 +137,114 @@ function SearchDNSRecord({ contract }) {
           placeholder="Domain Name"
           value={searchDomainName}
           onChange={(e) => setSearchDomainName(e.target.value)}
-          className="flex-grow p-3 bg-gray-800 text-gray-300 rounded-md border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" required
+          className="flex-grow p-3 bg-gray-800 text-gray-300 rounded-md border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          required
         />
-        <button type="submit" className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-md transition duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50">
+        <motion.button 
+          type="submit" 
+          className="bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-6 rounded-md transition duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+        >
+          <Search className="inline-block mr-2" size={18} />
           Search
-        </button>
+        </motion.button>
       </form>
-      {loading && (
-        <div className="mt-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
-          <p className="text-gray-300 whitespace-pre-wrap">{txnMsg}</p>
-        </div>
-      )}
-      {searchResult && (
-        <div className="bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-700">
-          <h3 className="font-bold mb-4 text-xl text-indigo-400">Search Result:</h3>
-          {['_addr_resolver', 'record_type', 'expiry', 'contact', 'tokenuri', 'owner'].map((field) => (
-            <p key={field} className="mb-2">
-              <span className="font-medium text-gray-400">{field.charAt(0).toUpperCase() + field.slice(1).replace(/_/g, ' ')}:</span>{' '}
-              <span className="text-gray-300">{searchResult[field]}</span>
+
+      <AnimatePresence>
+        {loading && (
+          <motion.div 
+            className="mt-6 p-4 bg-gray-800 rounded-lg border border-gray-700"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+          >
+            <p className="text-gray-300 flex items-center">
+              <Loader className="animate-spin mr-2" size={18} />
+              {txnMsg}
             </p>
-          ))}
-          <div className="mt-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
-            <p className="mb-2 text-gray-300">Attestations:</p>{attested_data}<br></br>
-            <p className="mb-2 text-gray-300">Txn Hash:</p>{attested_txn}
-          </div>
-          <div className="mt-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
-            <p className="mb-2 text-gray-300">Source IP of {searchDomainName}: {final_ip}</p>
-          </div>
-        </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {searchResult && (
+          <motion.div 
+            className="bg-gray-800 p-6 rounded-lg shadow-lg border border-gray-700 mt-6"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+          >
+            <h3 className="font-bold mb-4 text-xl text-indigo-400">Search Result:</h3>
+            {['_addr_resolver', 'record_type', 'expiry', 'contact', 'tokenuri', 'owner'].map((field) => (
+              <p key={field} className="mb-2 flex items-center">
+                <span className="font-medium text-gray-400 mr-2">{field.charAt(0).toUpperCase() + field.slice(1).replace(/_/g, ' ')}:</span>
+                <span className="text-emerald-400">{searchResult[field]}</span>
+              </p>
+            ))}
+            <motion.div 
+              className="mt-6 p-4 bg-gray-900 rounded-lg border border-gray-700"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+            >
+              <p className="mb-2 text-indigo-400">Attestations:</p>
+              <ul>{attested_data}</ul>
+              <p className="mb-2 mt-4 text-indigo-400">Txn Hash:</p>
+              <ul>{attested_txn}</ul>
+            </motion.div>
+            <motion.div 
+              className="mt-6 p-4 bg-gray-900 rounded-lg border border-gray-700"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              <p className="mb-2 text-indigo-400">Source IP of {searchDomainName}:</p>
+              <p className="text-emerald-400">{final_ip}</p>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {searchResult && (
+        <motion.div 
+          className="mt-6 p-4 rounded-lg border border-gray-700"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.4 }}
+        >
+          <motion.button
+            onClick={() => setIsZKWidgetOpen(true)}
+            className="w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-md transition duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50 flex items-center justify-center"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <Key className="mr-2" size={18} />
+            {verificationMsg}
+          </motion.button>
+          <ZKProofWidget isOpen={isZKWidgetOpen} onClose={() => setIsZKWidgetOpen(false)} />
+        </motion.div>
       )}
-      {searchResult &&
-      <div className="mt-6 p-4 rounded-lg border border-gray-700">
-      <button
-          onClick={() => setIsZKWidgetOpen(true)}
-          className="mt-4 w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-md transition duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50"
+
+      {fwdDNSButton && (
+        <motion.div 
+          className="mt-6 p-4 rounded-lg border border-gray-700"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.5 }}
         >
-          {verificationMsg}
-        </button>
-        <ZKProofWidget isOpen={isZKWidgetOpen} onClose={() => setIsZKWidgetOpen(false)} />
-      </div>
-      }
-      {fwdDNSButton && 
-      <div className="mt-6 p-4 rounded-lg border border-gray-700">
-      <button
-          onClick={forwardToDNS}
-          className="mt-4 w-full bg-purple-600 hover:bg-purple-700 text-white font-medium py-3 px-4 rounded-md transition duration-300 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-opacity-50"
-        >
-          Forward To DNS Resolver
-        </button>
-      </div>
-      }
-    </div>
+          <motion.button
+            onClick={forwardToDNS}
+            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 px-4 rounded-md transition duration-300 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-opacity-50 flex items-center justify-center"
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+          >
+            <Globe className="mr-2" size={18} />
+            Forward To DNS Resolver
+          </motion.button>
+        </motion.div>
+      )}
+    </motion.div>
   );
 }
 

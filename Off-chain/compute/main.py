@@ -63,7 +63,7 @@ account = w3.eth.account.from_key(private_key)
 def forward_to_dns_resolver(domain: str, address_resolver: str, resolver_port=53):
     # Create a new DNS query message
     print(domain, address_resolver)
-    if not address_resolver or address_resolver=="null":
+    if not address_resolver or address_resolver=="null" or len(address_resolver.split("."))<4:
         address_resolver = "8.8.8.8" #default
     query = dns.message.make_query(domain, dns.rdatatype.A)
 
@@ -93,7 +93,6 @@ def forward_to_dns_resolver(domain: str, address_resolver: str, resolver_port=53
 async def getEnvioData(network: str):
     # Get all the Envio data from the given network : Fhenix, Galadriel and Chillz
     networkdetails = NETWORK_URLS.get(network)
-    print(w3.eth.block_number)
     if not networkdetails: return "Please provide a valid network name"
     url, chainId = networkdetails
     client = getClient(url)

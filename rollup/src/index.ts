@@ -1,5 +1,4 @@
 import { ActionConfirmationStatus } from "@stackr/sdk";
-import { Playground } from "@stackr/sdk/plugins"; 
 import { Wallet } from "ethers";
 import { mru } from "./stackr/mru.ts";
 import { UpdateCounterSchema } from "./stackr/schemas.ts";
@@ -7,7 +6,7 @@ import { signMessage } from "./utils.ts";
 
 const main = async () => {
   const inputs = {
-    contact: "Testing DJBRO",
+    timestamp: Date.now(),
   };
 
   // Create a random wallet
@@ -26,7 +25,6 @@ const main = async () => {
   // leverage the ack to wait for C1 and access logs & error from STF execution
   const { logs, errors } = await ack.waitFor(ActionConfirmationStatus.C1);
   console.log({ logs, errors });
-  Playground.init(mru);
 };
 
 main();

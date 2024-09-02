@@ -1,8 +1,8 @@
 import { State } from "@stackr/sdk/machine";
 import { solidityPackedKeccak256 } from "ethers";
 
-export class CounterState extends State<string> {
-  constructor(state: string) {
+export class CounterState extends State<number> {
+  constructor(state: number) {
     super(state);
   }
 
@@ -16,7 +16,6 @@ export class CounterState extends State<string> {
   // }
 
   getRootHash() {
-    
-    return solidityPackedKeccak256(["string"], [this.state]);
+    return solidityPackedKeccak256(["uint256"], [this.state]);
   }
 }
