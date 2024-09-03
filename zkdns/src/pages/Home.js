@@ -69,6 +69,18 @@ function Home() {
 
   const desiredChainId = 8008135;
 
+  const defaultAttestationHash = "0xb25574b3c2a659e97e784b7d506a6672443374add8a51d6328ec008a4a5f259f";
+  const defaultAttestationId = "0x13d";
+  const defaultTopicId = "0.0.4808707";
+  const defaultSchemaId = "onchain_evm_11155111_0x76";
+
+  useEffect(() => {
+    localStorage.setItem("topicId", defaultTopicId);
+    localStorage.setItem("attestationId", defaultAttestationId);
+    localStorage.setItem("attestationHash", defaultAttestationHash);
+    localStorage.setItem("schemaId", defaultSchemaId);
+  }, [])
+
   useEffect(() => {
     const setupContract = async () => {
       if (isConnected && walletProvider) {

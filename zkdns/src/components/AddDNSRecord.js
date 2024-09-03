@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { create } from "ipfs-http-client";
 import axios from 'axios';
+import { Save, Loader, Upload, Key, Server, Globe } from 'lucide-react';
 import ZKProofWidget from './ZKProofWidget';
 
 function AddDNSRecord({ contractWithSigner, connectedAddress }) {
@@ -17,11 +19,15 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
   const [isMinted, setMinted] = useState(false);
   const [mintedLink, setMintedLinks] = useState([]);
   const [isAttested, setAttestationstatus] = useState(false);
-  const [attestationdetails, setAttestationDetails] = useState({"txnHash": "0xb25574b3c2a659e97e784b7d506a6672443374add8a51d6328ec008a4a5f259f", "AttestationId": "0x13d"}); // default values 
+  const [attestationdetails, setAttestationDetails] = useState({
+    "txnHash": "0xb25574b3c2a659e97e784b7d506a6672443374add8a51d6328ec008a4a5f259f",
+    "AttestationId": "0x13d"
+  });
   const [isZKWidgetOpen, setIsZKWidgetOpen] = useState(false);
   const [isHedera, setHedera] = useState(false);
   const [isFhenix, setFhenix] = useState(true);
 
+  // IPFS configuration
   const projectId = '2WCbZ8YpmuPxUtM6PzbFOfY5k4B';
   const projectSecretKey = 'c8b676d8bfe769b19d88d8c77a9bd1e2';
   const authorization = "Basic " + btoa(projectId + ":" + projectSecretKey);
@@ -34,17 +40,6 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
       authorization: authorization
     },
   });
-  const defaultAttestationHash = "0xb25574b3c2a659e97e784b7d506a6672443374add8a51d6328ec008a4a5f259f";
-  const defaultAttestationId = "0x13d";
-  const defaultTopicId = "0.0.4790189";
-  const defaultSchemaId = "onchain_evm_11155111_0x76";
-
-  useEffect(() => {
-    localStorage.setItem("topicId", defaultTopicId);
-    localStorage.setItem("attestationId", defaultAttestationId);
-    localStorage.setItem("attestationHash", defaultAttestationHash);
-    localStorage.setItem("schemaId", defaultSchemaId);
-  }, [])
 
   const defaultValues = {
     DNS: {
@@ -67,18 +62,24 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
     setDnsRecordInput(defaultValues[recordType]);
   };
 
-  const attestDnsInput = async() => {
-    try{
+
+  const attestDnsInput = async () => {
+    try {
       const attestresponse = await axios.post("http://localhost:4000/createattestation", dnsRecordInput);
-      console.log(attestresponse);
-      setAttestationDetails({"txnHash": attestresponse.data.txnHash, "AttestationId": attestresponse.data.attestationId});
+      setAttestationDetails({
+        "txnHash": attestresponse.data.txnHash,
+        "AttestationId": attestresponse.data.attestationId
+      });
       localStorage.setItem("topicId", attestresponse.data.attestationId);
-    } catch{
-      setAttestationDetails({"txnHash": defaultAttestationHash, "AttestationId": defaultAttestationId});
+    } catch {
+      setAttestationDetails({
+        "txnHash": "0xb25574b3c2a659e97e784b7d506a6672443374add8a51d6328ec008a4a5f259f",
+        "AttestationId": "0x13d"
+      });
     }
   };
 
-  const sendSBTDirect = async() => {
+  const sendSBTDirect = async () => {
     setLoading(true);
     setHedera(true);
     setFhenix(false);
@@ -88,16 +89,17 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
       "image": "${dnsRecordInput.contact}"
     }`;
     setTxnMsg("Attesting a new SBT...");
-    console.log(dnsRecordInput);
-    try{
+    try {
       await attestDnsInput();
-    } catch{
-      setAttestationDetails({"txnHash": defaultAttestationHash, "AttestationId": defaultAttestationId});
+    } catch {
+      setAttestationDetails({
+        "txnHash": "0xb25574b3c2a659e97e784b7d506a6672443374add8a51d6328ec008a4a5f259f",
+        "AttestationId": "0x13d"
+      });
     }
     setAttestationstatus(true);
     setTxnMsg("Uploading to IPFS");
     const result = await ipfs_client.add(updatedJSON);
-    console.log(result.cid.toString());
     const cid = result.cid.toString();
     setTxnMsg("Uploading on-chain via Hedera testnet");
     const tx = await contractWithSigner.safeMint(
@@ -110,31 +112,29 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
       dnsRecordInput.contact
     );
     await tx.wait();
-    console.log('Record added successfully');
     setTxnMsg("Sending acknowledgement to topic");
     const message = `Attestation details - Transaction Hash: ${attestationdetails['txnHash']}  AttestationId: ${attestationdetails['AttestationId']}`;
-    const messagedata = {message: message};
+    const messagedata = { message: message };
     let response;
-    try{
+    try {
       response = await axios.post("http://localhost:4000/sendMessage", messagedata);
-    } catch{
-      response = {"data": {"topicId": defaultTopicId, "transactionStatus": "Success", "attestationHash": attestationdetails['txnHash'],"attestationId":  attestationdetails['AttestationId']}};
+    } catch {
+      response = {
+        "data": {
+          "topicId": "0.0.4790189",
+          "transactionStatus": "Success",
+          "attestationHash": attestationdetails['txnHash'],
+          "attestationId": attestationdetails['AttestationId']
+        }
+      };
     }
     
     const topicdata = response.data;
     const topicId = topicdata["topicId"];
-    console.log(response);
-    console.log(topicId);
     localStorage.setItem("topicId", topicId);
-    console.log("The topic id from local storage");
-    console.log(localStorage.getItem("topicId"));
-    const transactionStatus = topicdata["transactionStatus"];
     setTxnMsg(`${recordType} Record added successfully\n view txn: https://hashscan.io/testnet/transaction/${tx.hash}\n Ipfs : https://skywalker.infura-ipfs.io/ipfs/${cid}`);
-    console.log(topicdata);
     setMintedLinks(topicdata);
     setMinted(true);
-
-    // Clear input fields after successful addition
     setDnsRecordInput({
       domainName: '',
       addressResolver: '',
@@ -142,22 +142,19 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
       expiry: '',
       contact: ''
     });
-
     setLoading(false);
     setHedera(false);
-
   };
 
   function stringToInteger(str) {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
-        const char = str.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash; // Convert to 32-bit integer
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash; // Convert to 32-bit integer
     }
     return Math.abs(hash);
-}
-
+  }
 
   const addDNSRecord = async (e) => {
     e.preventDefault();
@@ -167,7 +164,6 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
       setTxnMsg("Encrypting strings");
       const integer_addressResolver = stringToInteger(dnsRecordInput.addressResolver);
       const integer_contact = stringToInteger(dnsRecordInput.contact);
-      // console.log(integer_addressResolver);
       localStorage.setItem(integer_addressResolver, dnsRecordInput.addressResolver);
       localStorage.setItem(integer_contact, dnsRecordInput.contact);
 
@@ -179,7 +175,6 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
       setTxnMsg("Uploading to IPFS");
       
       const result = await ipfs_client.add(updatedJSON);
-      console.log(result.cid.toString());
       const cid = result.cid.toString();
       setTxnMsg("Uploading on-chain via Fhenix");
       const tx = await contractWithSigner.safeMint(
@@ -192,9 +187,7 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
         integer_contact
       );
       await tx.wait();
-      console.log('Record added successfully');
       setTxnMsg(`${recordType} Record added successfully\n view txn: https://explorer.helium.fhenix.zone/tx/${tx.hash}\n Ipfs : https://skywalker.infura-ipfs.io/ipfs/${cid}`);
-      // Clear input fields after successful addition
       setDnsRecordInput({
         domainName: '',
         addressResolver: '',
@@ -210,23 +203,31 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
   };
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <motion.div
+      className="max-w-2xl mx-auto text-gray-300"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.5 }}
+    >
       <h2 className="text-3xl font-bold mb-6 text-indigo-400">Add {recordType} Record</h2>
       <div className="mb-6 flex items-center space-x-4">
         <select
           value={recordType}
           onChange={(e) => setRecordType(e.target.value)}
-          className="p-2 bg-gray-800 text-gray-300 rounded-md border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" 
+          className="p-2 bg-gray-800 text-gray-300 rounded-md border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
         >
           <option value="DNS">DNS</option>
           <option value="ENS">ENS</option>
         </select>
-        <button
+        <motion.button
           onClick={populateDefaultValues}
-          className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition duration-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50"
+          className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition duration-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 flex items-center"
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
         >
+          <Server className="mr-2" size={18} />
           Populate Default Values
-        </button>
+        </motion.button>
       </div>
       <form onSubmit={addDNSRecord} className="space-y-4">
         <input
@@ -234,56 +235,104 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
           placeholder="To Address"
           value={connectedAddress}
           disabled
-          className="w-full p-3 bg-gray-700 text-gray-300 rounded-md border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" required
+          className="w-full p-3 bg-gray-700 text-gray-300 rounded-md border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          required
         />
         {['domainName', 'addressResolver', 'dnsRecorderType', 'expiry', 'contact'].map((field) => (
-          <input
+          <motion.input
             key={field}
             type="text"
             placeholder={field.charAt(0).toUpperCase() + field.slice(1).replace(/([A-Z])/g, ' $1')}
             value={dnsRecordInput[field]}
             onChange={(e) => setDnsRecordInput({...dnsRecordInput, [field]: e.target.value})}
-            className="w-full p-3 bg-gray-800 text-gray-300 rounded-md border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500" required
+            className="w-full p-3 bg-gray-800 text-gray-300 rounded-md border border-gray-700 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            required
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
           />
         ))}
-        <button type="submit" className="w-full bg-indigo-600 hover:bg-indigo-400 text-white font-medium py-3 px-4 rounded-md transition duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50">
+        <motion.button
+          type="submit"
+          className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-3 px-4 rounded-md transition duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50 flex items-center justify-center"
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <Key className="mr-2" size={18} />
           Fhenix: Add Secure Record (Encrypted)
-        </button>
-      </form> <br></br>
-      <button onClick={sendSBTDirect} className="w-full bg-red-600 hover:bg-indigo-400 text-white font-medium py-3 px-4 rounded-md transition duration-300 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-opacity-50">
-          Hedera: Add Record(Direct)
-        </button>
-      {loading && (
-        <div className="mt-6 text-center">
-          <div className="animate-spin rounded-full h-10 w-10 border-t-2 border-b-2 border-indigo-500 mx-auto"></div>
-          <p className="mt-3 text-gray-400">{txnMsg}</p>
-        </div>
-      )}
-      {isAttested && isHedera &&
-        <div className="mt-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
-          <li className="text-gray-300 whitespace-pre-wrap">Transaction Hash: {attestationdetails.txnHash}</li>
-          <p className="text-gray-300 whitespace-pre-wrap">AttestationId: {attestationdetails.AttestationId}</p>
-        </div>
-      }
-      {isMinted && !loading && isFhenix &&
-        <div className="mt-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
-          <li className="text-gray-300 whitespace-pre-wrap">Transaction Hash: https://explorer.helium.fhenix.zone/tx/{mintedLink[0]}</li>
-          <p className="text-gray-300 whitespace-pre-wrap">Transaction Receipt: {mintedLink[1]}</p>
-        </div>
-      }
-      {isMinted && !loading && isHedera &&
-        <div className="mt-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
-          <li className="text-gray-300 whitespace-pre-wrap">Transaction Hash: https://hashscan.io/testnet/transaction/{mintedLink[0]}</li>
-          <p className="text-gray-300 whitespace-pre-wrap">Transaction Receipt: {mintedLink[1]}</p>
-        </div>
-      }
-      {txnMsg && !loading && (
-        <div className="mt-6 p-4 bg-gray-800 rounded-lg border border-gray-700">
-          <p className="text-gray-300 whitespace-pre-wrap">{txnMsg}</p>
-        </div>
-      )}
-    </div>
+        </motion.button>
+      </form>
+      <motion.button
+        onClick={sendSBTDirect}
+        className="w-full mt-4 bg-red-600 hover:bg-red-700 text-white font-medium py-3 px-4 rounded-md transition duration-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center"
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+      >
+        <Globe className="mr-2" size={18} />
+        Hedera: Add Record (Direct)
+      </motion.button>
+
+      <AnimatePresence>
+        {loading && (
+          <motion.div
+            className="mt-6 p-4 bg-gray-800 rounded-lg border border-gray-700"
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+          >
+            <p className="text-gray-300 flex items-center">
+              <Loader className="animate-spin mr-2" size={18} />
+              {txnMsg}
+            </p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isAttested && isHedera && (
+          <motion.div
+            className="mt-6 p-4 bg-gray-800 rounded-lg border border-gray-700"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+          >
+            <p className="text-gray-300 whitespace-pre-wrap">Transaction Hash: {attestationdetails.txnHash}</p>
+            <p className="text-gray-300 whitespace-pre-wrap">AttestationId: {attestationdetails.AttestationId}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+
+      <AnimatePresence>
+        {isMinted && !loading && (isFhenix || isHedera) && (
+          <motion.div
+            className="mt-6 p-4 bg-gray-800 rounded-lg border border-gray-700"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+          >
+            <p className="text-gray-300 whitespace-pre-wrap">Transaction Hash: https://hashscan.io/testnet/transaction/{mintedLink[0]}</p>
+            <p className="text-gray-300 whitespace-pre-wrap">Transaction Receipt: {mintedLink[1]}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {txnMsg && !loading && (
+          <motion.div
+            className="mt-6 p-4 bg-gray-800 rounded-lg border border-gray-700"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+          >
+            <p className="text-gray-300 whitespace-pre-wrap">{txnMsg}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+    </motion.div>
   );
-}
+};
 
 export default AddDNSRecord;
+
