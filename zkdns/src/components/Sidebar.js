@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { Home, Plus, Search, MessageSquare, BarChart2, Activity } from 'lucide-react';
+import { Home, Plus, Search, MessageSquare, BarChart2, Activity, MessageSquareText } from 'lucide-react';
 
 function Sidebar({ activeTab, setActiveTab }) {
   const tabs = [
@@ -10,6 +10,7 @@ function Sidebar({ activeTab, setActiveTab }) {
     { id: 'topicmessages', name: 'Hedera Mirror Node Messages', icon: MessageSquare },
     { id: 'ssvmetrics', name: 'SSV Metrics', icon: BarChart2 },
     { id: 'enviometrics', name: 'Envio Hyper Sync Metrics', icon: Activity },
+    { id: 'chatai', name: 'Chat with our AI knowledge Base', icon: MessageSquareText },
   ];
 
   return (

@@ -12,6 +12,7 @@
     "@ethersproject/providers": "^5.7.2",
     "@ethsign/sp-sdk": "^0.7.2",
     "@hashgraph/sdk": "^2.50.0",
+    "@xmtp/xmtp-js": "^12.1.0",
     "axios": "^1.7.5",
     "dotenv": "^16.4.5",
     "ethers": "^6.13.2",

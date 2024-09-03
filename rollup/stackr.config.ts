@@ -23,7 +23,7 @@ const stackrConfig: StackrConfig = {
     ],
   },
   domain: {
-    name: "Stackr MVP v0",
+    name: "Reputation Rollup",
     version: "1",
     salt: "0x0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
   },
@@ -32,7 +32,7 @@ const stackrConfig: StackrConfig = {
     uri: process.env.DATABASE_URI as string,
   },
   registryContract: process.env.REGISTRY_CONTRACT as string,
-  preferredDA: DA.CELESTIA,
+  preferredDA: DA.AVAIL,
   logLevel: "log",
 };
 

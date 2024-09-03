@@ -1,21 +1,71 @@
 import { State } from "@stackr/sdk/machine";
-import { solidityPackedKeccak256 } from "ethers";
+import { solidityPackedKeccak256, AddressLike, ZeroHash } from "ethers";
+import { MerkleTree } from "merkletreejs";
 
-export class CounterState extends State<number> {
-  constructor(state: number) {
+export type UserReputation = {
+  fid: number;
+  address: AddressLike;
+  totalScore: number;
+  lastUpdated: number;
+}
+
+export type ReputationState = UserReputation[];
+
+export class ReputationSystemTransport {
+  public merkleTree: MerkleTree;
+  public userRepuations: UserReputation[];
+  // public reputationChangeEvents: reputationChangeEvent[];
+
+  constructor(leaves: UserReputation[]) {
+    this.merkleTree = this.createTree(leaves);
+    this.userRepuations = leaves;
+  }
+
+  createTree(leaves: UserReputation[]) {
+    const hashedLeaves = leaves.map((leaf) => {
+      return solidityPackedKeccak256(
+        [
+          "uint256",
+          "address",
+          "uint256",
+          "uint256",
+        ],
+        [
+          leaf.fid,
+          leaf.address,
+          leaf.totalScore,
+          leaf.lastUpdated,
+        ]
+      );
+    });
+    return new MerkleTree(hashedLeaves);
+  }
+}
+
+
+export class ReputationSystem extends State<
+  ReputationState,
+  ReputationSystemTransport
+> {
+  constructor(state: ReputationState) {
     super(state);
   }
 
-  // Here since the state is simple and doesn't need wrapping, we skip the transformers to wrap and unwrap the state
+  transformer() {
+    return {
+      wrap: () => {
+        return new ReputationSystemTransport(this.state);
+      },
+      unwrap: (wrappedState: ReputationSystemTransport): ReputationState => {
+        return wrappedState.userRepuations;
+      },
+    };
+  }
 
-  // transformer() {
-  //   return {
-  //     wrap: () => this.state,
-  //     unwrap: (wrappedState: number) => wrappedState,
-  //   };
-  // }
-
-  getRootHash() {
-    return solidityPackedKeccak256(["uint256"], [this.state]);
+  getRootHash(): string {
+    if (this.state.length === 0) {
+      return ZeroHash;
+    }
+    return this.transformer().wrap().merkleTree.getHexRoot();
   }
 }

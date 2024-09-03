@@ -35,7 +35,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-NETWORK_URLS = {"Chillz": ["https://chiliz.hypersync.xyz", 8888], 
+NETWORK_URLS_TESTNET_TESTNET = {"Chillz": ["https://chiliz.hypersync.xyz", 8888], 
                 "Fhenix": ["https://fhenix-testnet.hypersync.xyz", 42069],
                 "Galadriel": ["https://galadrial-devnet.hypersync.xyz", 696969],
                 }
@@ -92,7 +92,7 @@ def forward_to_dns_resolver(domain: str, address_resolver: str, resolver_port=53
 @app.get("/getEnvioblockdata")
 async def getEnvioData(network: str):
     # Get all the Envio data from the given network : Fhenix, Galadriel and Chillz
-    networkdetails = NETWORK_URLS.get(network)
+    networkdetails = NETWORK_URLS_TESTNET.get(network)
     if not networkdetails: return "Please provide a valid network name"
     url, chainId = networkdetails
     client = getClient(url)
@@ -102,7 +102,7 @@ async def getEnvioData(network: str):
 @app.get("/getLogsEvent")
 async def getLogs(network: str):
     contract = "0xb5ddC78A82227C25864F269a0fc58d4166AA26b0"
-    networkdetails = NETWORK_URLS.get(network)
+    networkdetails = NETWORK_URLS_TESTNET.get(network)
     if not networkdetails: return "Please provide a valid network name"
     url, chainId = networkdetails
     client = getClient(url)
@@ -112,7 +112,7 @@ async def getLogs(network: str):
 
 @app.get("/getBlockTransactions")
 async def getLogs(network: str):
-    networkdetails = NETWORK_URLS.get(network)
+    networkdetails = NETWORK_URLS_TESTNET.get(network)
     if not networkdetails: return "Please provide a valid network name"
     url, chainId = networkdetails
     client = getClient(url)
@@ -123,7 +123,7 @@ async def getLogs(network: str):
 @app.get("/getTxnEvents")
 async def getLogstxn(network: str):
     txn_hash = "0x0ce59482a47c367c57e2dc14d559990af9cb1aef86ff1af726cee9e75c1c2827"
-    networkdetails = NETWORK_URLS.get(network)
+    networkdetails = NETWORK_URLS_TESTNET.get(network)
     if not networkdetails: return "Please provide a valid network name"
     url, chainId = networkdetails
     client = getClient(url)

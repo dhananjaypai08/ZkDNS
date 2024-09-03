@@ -11,6 +11,8 @@ import abiFhenix from "../contracts/ZKDNSFhenix.json";
 import abiHedera from "../contracts/ZKDNS.json";
 import { createWeb3Modal, defaultConfig } from '@web3modal/ethers/react';
 import { useWeb3ModalProvider, useWeb3ModalAccount, useDisconnect, useWeb3Modal } from '@web3modal/ethers/react';
+import ChatAI from '../components/ChatAI';
+import chatABI from "../contracts/ChatAI.json";
 
 // Web3Modal configuration
 const projectId = 'a7a2557c75d9558a9c932d5f99559799';
@@ -21,6 +23,13 @@ const testnet1 = {
   currency: 'HBAR',
   rpcUrl: 'https://testnet.hashio.io/api'
 };
+
+const testnet2 = {
+  chainId: 696969,
+  name: 'Galadriel Devnet',
+  currency: 'GAL',
+  rpcUrl: 'https://devnet.galadriel.com'
+}
 
 const testnet = {
   chainId: 8008135,
@@ -50,7 +59,7 @@ const ethersConfig = defaultConfig({
 
 createWeb3Modal({
   ethersConfig,
-  chains: [testnet, testnet1],
+  chains: [testnet, testnet1, testnet2],
   projectId,
   enableAnalytics: true,
   themeMode: 'dark'
@@ -131,6 +140,7 @@ function Home() {
         {activeTab === 'topicmessages' && <TopicMessages topicId="0.0.4790189" />}
         {activeTab === 'ssvmetrics' && <SSVMetrics />}
         {activeTab === 'enviometrics' && <EnvioMetrics />}
+        {activeTab === 'chatai' && <ChatAI contractAddress={chatABI.address} contractABI={chatABI.abi} walletProvider={walletProvider} chainId={testnet2.chainId}/>}
 
         {loading && (
           <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center">
