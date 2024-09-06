@@ -39,6 +39,22 @@ const testnet = {
   rpcUrl: 'https://api.helium.fhenix.zone'
 }
 
+const testnet3 = {
+  chainId: 88882,
+  name: 'Chiliz Spicy Testnet',
+  currency: 'CHZ',
+  explorerUrl: 'https://testnet.chiliscan.com/',
+  rpcUrl: 'https://spicy-rpc.chiliz.com/'
+}
+
+const testnet4 = {
+  chainId: 2810,
+  name: 'Morph Holesky Testnet',
+  currency: 'ETH',
+  explorerUrl: 'https://explorer-holesky.morphl2.io/',
+  rpcUrl: 'https://rpc-quicknode-holesky.morphl2.io'
+}
+
 const metadata = {
   name: 'ZkDNS',
   description: 'Private and secure DNS/ENS Lookups',
@@ -48,7 +64,7 @@ const metadata = {
 
 const ethersConfig = defaultConfig({
   metadata,
-  defaultChainId: 11155111,
+  defaultChainId: 8008135,
   auth: {
     email: true,
     socials: ['google', 'x', 'github', 'discord', 'apple', 'facebook', 'farcaster'],
@@ -59,7 +75,7 @@ const ethersConfig = defaultConfig({
 
 createWeb3Modal({
   ethersConfig,
-  chains: [testnet, testnet1, testnet2],
+  chains: [testnet, testnet1, testnet2, testnet3, testnet4],
   projectId,
   enableAnalytics: true,
   themeMode: 'dark'
@@ -70,6 +86,7 @@ function Home() {
   const [loading, setLoading] = useState(false);
   const [contract, setContract] = useState();
   const [contractWithSigner, setContractWithSigner] = useState();
+  const [contractData, setContractData] = useState();
 
   const { walletProvider } = useWeb3ModalProvider();
   const { address, isConnected } = useWeb3ModalAccount();
@@ -109,8 +126,8 @@ function Home() {
           const signer = await ethersProvider.getSigner();
           const contract = new ethers.Contract(abi.address, abi.abi, ethersProvider);
           const contractWithSigner = contract.connect(signer);
-
           setContract(contract);
+          setContractData(abi)
           setContractWithSigner(contractWithSigner);
 
           let owner = await contract.owner();
@@ -135,12 +152,12 @@ function Home() {
         )}
 
         {activeTab === 'home' && <Landing />}
-        {activeTab === 'add' && <AddDNSRecord contractWithSigner={contractWithSigner} connectedAddress={address} />}
-        {activeTab === 'search' && <SearchDNSRecord contract={contract} />}
+        {activeTab === 'add' && <AddDNSRecord contractData={contractData} connectedAddress={address} walletProvider={walletProvider} />}
+        {activeTab === 'search' && <SearchDNSRecord contract={contract}/>}
         {activeTab === 'topicmessages' && <TopicMessages topicId="0.0.4790189" />}
         {activeTab === 'ssvmetrics' && <SSVMetrics />}
         {activeTab === 'enviometrics' && <EnvioMetrics />}
-        {activeTab === 'chatai' && <ChatAI contractAddress={chatABI.address} contractABI={chatABI.abi} walletProvider={walletProvider} chainId={testnet2.chainId}/>}
+        {activeTab === 'chatai' && <ChatAI contractAddress={chatABI.address} contractABI={chatABI.abi} walletProvider={walletProvider} chainId={testnet2.chainId} contractWithSigner={contractWithSigner}/>}
 
         {loading && (
           <div className="fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center">

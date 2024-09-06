@@ -9,6 +9,7 @@ const TopicMessages = ({ topicId }) => {
   const [schemaData, setSchemaData] = useState(null);
   const [attestationData, setAttestationData] = useState(null);
   const [activeTab, setActiveTab] = useState('messages');
+  const [reputation_state, setReputationState] = useState(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -33,6 +34,9 @@ const TopicMessages = ({ topicId }) => {
 
         const attestationResponse = await axios.get(`http://localhost:4000/queryAttestations?id=${schemaId}`);
         setAttestationData(attestationResponse.data);
+
+        const reputationState = await axios.get('http://localhost:5050');
+        setReputationState(reputationState.data);
       } catch (error) {
         console.error('Error fetching data:', error);
       } finally {
@@ -93,7 +97,7 @@ const TopicMessages = ({ topicId }) => {
       </h2>
 
       <div className="flex space-x-4 mb-6">
-        {['messages', 'schema', 'attestation'].map((tab) => (
+        {['messages', 'schema', 'attestation', 'stackrReputation'].map((tab) => (
           <motion.button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -156,6 +160,7 @@ const TopicMessages = ({ topicId }) => {
             )}
             {activeTab === 'schema' && renderDataSection("Schema Indexing Data", schemaData)}
             {activeTab === 'attestation' && renderDataSection("Attestation Indexing Data", attestationData)}
+            {activeTab === 'stackrReputation' && renderDataSection("Domain user Reputation via Stackr MRU", reputation_state)}
           </motion.div>
         )}
       </AnimatePresence>

@@ -1,5 +1,6 @@
 const express = require('express');
 const { SignProtocolClient, SpMode, EvmChains, IndexService } = require("@ethsign/sp-sdk");
+const { ApiPromise, WsProvider } = require('@polkadot/api');
 
 require('dotenv').config();
 const { privateKeyToAccount } = require("viem/accounts");
@@ -13,6 +14,9 @@ const {
   TopicMessageQuery,
   TopicMessageSubmitTransaction,
 } = require("@hashgraph/sdk");
+
+//AVAIL Setup
+const wsProvider = new WsProvider('wss://rpc.polkadot.io');
 
 // Grab the OPERATOR_ID and OPERATOR_KEY from the .env file
 const myAccountId = process.env.MY_ACCOUNT_ID;
@@ -111,6 +115,35 @@ async function queryAttestations() {
       attestations: response.data.rows,
     };
 }
+
+app.get('/checkAvail', async(req, res) => {
+  // Retrieve user data from your database or data source
+  const api = await ApiPromise.create({ provider: wsProvider });
+  console.log(api.genesisHash.toHex());
+  // The actual address that we will use
+  const ADDR = '5G95nun8kzRo8W9iP35EA9xzpFUGbyikHeYVCpHtwp7i8h6e';
+
+  // Retrieve the chain name
+  const chain = await api.rpc.system.chain();
+  // console.log(chain);
+  // Retrieve the latest header
+  const lastHeader = await api.rpc.chain.getHeader();
+  //console.log(lastHeader);
+  // The actual address that we will use
+  const newADDR = '5DTestUPts3kjeXSTMyerHihn1uwMfLj8vU8sqF7qYrFabHE';
+
+  // Retrieve the last timestamp
+  const now = await api.query.timestamp.now();
+
+  // Retrieve the account balance & nonce via the system module
+  const { nonce, data: balance } = await api.query.system.account(newADDR);
+  console.log('balance');
+  console.log(balance);
+
+  console.log(`${now}: balance of ${balance.free} and a nonce of ${nonce}`);
+
+  res.json("Done");
+});
 
 
 app.get('/queryAttestation', async(req, res) => {

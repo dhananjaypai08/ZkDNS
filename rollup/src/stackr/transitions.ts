@@ -10,8 +10,8 @@ const findIndexOfFid = (state: StateWrapper, fid: number) => {
 };
 
 export interface calculateRepScoreInputsType {
-  totalMints: number,
-  qualityMints: number,
+  totalMints: number;
+  qualityMints: number;
 }
 
 export interface calculateRepScoreReturnType {
@@ -22,9 +22,8 @@ const calculateRepScore = (
   inputs: calculateRepScoreInputsType
 ): calculateRepScoreReturnType => {
 
-
   const totalScore = Math.round(
-    inputs.totalMints + (1.2)*inputs.qualityMints
+    inputs.qualityMints*1.2 + inputs.totalMints
   );
 
   return {
@@ -32,13 +31,9 @@ const calculateRepScore = (
   };
 };
 
-
+// --------- State Transition Handlers ---------
 const createRepScoreHandler: STF<ReputationSystem> = {
   handler: ({ inputs, state, msgSender }) => {
-    // Check the Frame signed action message verification
-    // if (!verifyFrameActionMessage(inputs.actionMessage)) {
-    //   throw new Error("Frame Action Invalid");
-    // }
 
     if (state.userRepuations.find((user) => user.fid === inputs.fid)) {
       throw new Error("User reputation already exists");
@@ -46,47 +41,31 @@ const createRepScoreHandler: STF<ReputationSystem> = {
 
     const repScore = calculateRepScore({
       totalMints: inputs.totalMints,
-      qualityMints: inputs.qualityMints 
+      qualityMints: inputs.qualityMints
     });
     console.log(repScore);
 
     const userReputation: UserReputation = {
       fid: inputs.fid,
       address: msgSender,
-      totalScore: repScore.totalScore,
       lastUpdated: inputs.timestamp,
+      totalScore: repScore.totalScore,
     };
-    // console.log(userReputation);
+    console.log(userReputation);
     state.userRepuations.push(userReputation);
     return state;
   },
 };
 
+// --------- State Transition Handlers ---------
 const updateRepScoreHandler: STF<ReputationSystem> = {
   handler: ({ inputs, state, msgSender }) => {
-    // Check the Frame signed action message verification
-    // if (!verifyFrameActionMessage(inputs.actionMessage)) {
-    //   throw new Error("Frame Action Invalid");
-    // }
-
-    if (
-      inputs.engagementRankPercentile > 100 ||
-      inputs.castFrequency > 150 ||
-      inputs.postQuality > 50 ||
-      inputs.followingRankPercentile > 100
-    ) {
-      throw new Error("Invalid inputs");
-    }
 
     const userRepIndex = findIndexOfFid(state, inputs.fid);
     const userRep = state.userRepuations[userRepIndex];
     if (!userRep) {
       throw new Error("User reputation doesn't exist");
     }
-
-    // if (msgSender != userRep.address) {
-    //   throw new Error("Only Owner Can updater reputation score");
-    // }
 
     const repScore = calculateRepScore({
       totalMints: inputs.totalMints,
@@ -97,8 +76,8 @@ const updateRepScoreHandler: STF<ReputationSystem> = {
     const newUserReputation: UserReputation = {
       fid: inputs.fid,
       address: userRep.address,
-      totalScore: repScore.totalScore,
       lastUpdated: inputs.timestamp,
+      totalScore: repScore.totalScore,
     };
 
     state.userRepuations[userRepIndex] = newUserReputation;

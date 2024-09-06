@@ -1,5 +1,10 @@
 import { State } from "@stackr/sdk/machine";
-import { solidityPackedKeccak256, AddressLike, ZeroHash } from "ethers";
+import {
+  AddressLike,
+  BytesLike,
+  ZeroHash,
+  solidityPackedKeccak256,
+} from "ethers";
 import { MerkleTree } from "merkletreejs";
 
 export type UserReputation = {
@@ -7,7 +12,8 @@ export type UserReputation = {
   address: AddressLike;
   totalScore: number;
   lastUpdated: number;
-}
+};
+
 
 export type ReputationState = UserReputation[];
 
@@ -41,7 +47,6 @@ export class ReputationSystemTransport {
     return new MerkleTree(hashedLeaves);
   }
 }
-
 
 export class ReputationSystem extends State<
   ReputationState,

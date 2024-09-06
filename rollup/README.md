@@ -1,4 +1,4 @@
-# rollup
+# testrollup
 
 Project initialized using [@stackr/sdk](https://www.stackrlabs.xyz/)
 
@@ -46,20 +46,20 @@ npm start
 
 ```bash
 # For Linux
-docker build -t rollup:latest .
+docker build -t testrollup:latest .
 
 # For Mac with Apple Silicon chips
-docker buildx build --platform linux/amd64,linux/arm64 -t rollup:latest .
+docker buildx build --platform linux/amd64,linux/arm64 -t testrollup:latest .
 ```
 
 - Run the Docker container using the following command:
 
 ```bash
 # If using SQLite as the datastore
-docker run --env-file .env -v ./db.sqlite:/app/db.sqlite -p <HOST_PORT>:<CONTAINER_PORT> --name=rollup -it rollup:latest
+docker run --env-file .env -v ./db.sqlite:/app/db.sqlite -p <HOST_PORT>:<CONTAINER_PORT> --name=testrollup -it testrollup:latest
 
 # If using other URI based datastores
-docker run --env-file .env -p <HOST_PORT>:<CONTAINER_PORT> --name=rollup -it rollup:latest
+docker run --env-file .env -p <HOST_PORT>:<CONTAINER_PORT> --name=testrollup -it testrollup:latest
 ```
 
 ## Playground Plugin

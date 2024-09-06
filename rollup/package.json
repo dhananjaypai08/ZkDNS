@@ -8,6 +8,7 @@
   },
   "dependencies": {
     "@stackr/sdk": "latest",
+    "cors": "^2.8.5",
     "ethers": "^6.7.1",
     "express": "^4.19.2",
     "merkletreejs": "^0.3.11",
@@ -18,9 +19,7 @@
     "@types/express": "^4.17.19",
     "@types/mocha": "^10.0.6",
     "bun-types": "latest",
-    "chai": "^5.1.0",
-    "esbuild": "^0.23.1",
-    "ts-node": "^10.9.2"
+    "chai": "^5.1.0"
   },
   "peerDependencies": {
     "typescript": "^5.0.0"

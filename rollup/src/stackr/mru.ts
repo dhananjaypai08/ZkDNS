@@ -1,14 +1,15 @@
 import { MicroRollup } from "@stackr/sdk";
-import { stackrConfig } from "../../stackr.config";
-import { machine } from "./machine";
-import { schemas } from "./schemas";
+import { stackrConfig } from "../../stackr.config.ts";
 
-type ReputationMachine = typeof machine;
+import { schemas } from "./schemas.ts";
+import { reputationStateMachine } from "./machine.ts";
+
+type ReputationMachine = typeof reputationStateMachine;
 
 const mru = await MicroRollup({
   config: stackrConfig,
   actionSchemas: [schemas.createRepScore, schemas.updateRepScore],
-  stateMachines: [machine],
+  stateMachines: [reputationStateMachine],
   stfSchemaMap: {
     createRepScore: schemas.createRepScore,
     updateRepScore: schemas.updateRepScore,

@@ -1,7 +1,9 @@
 import { ActionSchema, SolidityType } from "@stackr/sdk";
+import { SOURCE_ID } from "sqlite3";
 
 // createAccountSchema is a schema for creating an account
 export const createRepScoreSchema = new ActionSchema("createRepScore", {
+  actionMessage: SolidityType.STRING,
   fid: SolidityType.UINT,
   totalMints: SolidityType.UINT,
   qualityMints: SolidityType.UINT,
@@ -9,6 +11,7 @@ export const createRepScoreSchema = new ActionSchema("createRepScore", {
 });
 
 export const updateRepScoreSchema = new ActionSchema("updateRepScore", {
+  actionMessage: SolidityType.STRING,
   fid: SolidityType.UINT,
   totalMints: SolidityType.UINT,
   qualityMints: SolidityType.UINT,

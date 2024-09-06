@@ -35,7 +35,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-NETWORK_URLS_TESTNET_TESTNET = {"Chillz": ["https://chiliz.hypersync.xyz", 8888], 
+NETWORK_URLS_TESTNET = {"Chillz": ["https://chiliz.hypersync.xyz", 8888], 
                 "Fhenix": ["https://fhenix-testnet.hypersync.xyz", 42069],
                 "Galadriel": ["https://galadrial-devnet.hypersync.xyz", 696969],
                 }

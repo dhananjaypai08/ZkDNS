@@ -2,40 +2,42 @@ import express, { Request, Response } from "express";
 
 import { ActionEvents } from "@stackr/sdk";
 import { Playground } from "@stackr/sdk/plugins";
-import { ActionConfirmationStatus } from "@stackr/sdk";
-import { Wallet } from "ethers";
-import { mru, ReputationMachine } from "./stackr/mru.ts";
 import { schemas } from "./stackr/schemas.ts";
-import { signMessage, getBody } from "./utils.ts";
-import { stackrConfig } from "../stackr.config";
+import { ReputationMachine, mru } from "./stackr/mru.ts";
 import { transitions } from "./stackr/transitions.ts";
+import { stackrConfig } from "../stackr.config";
+import { Wallet } from "ethers";
+import { getBody } from "./utils.ts";
+const cors = require('cors');
 
 const { domain } = stackrConfig;
-const reputationMachine = mru.stateMachines.get<ReputationMachine>("reputation-system");
-const app = express();
-app.use(express.json());
-
-const walletOne = new Wallet(
-  "0x7f305a127c3ef0fc01ade48d279ff75b26bf1c70b102da7e0ce096cd9b3a3d74"
-);
-const walletTwo = new Wallet(
-  "0x0123456789012345678901234567890123456789012345678901234567890124"
-);
-type ActionName = keyof typeof schemas;
 
 console.log("Starting server...");
+
+const reputationMachine =
+  mru.stateMachines.get<ReputationMachine>("reputation-system");
+
+const app = express();
+app.use(express.json());
+app.use(cors({
+  origin: 'http://localhost:3000', // Replace with your frontend URL
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  headers: ['Content-Type', 'Authorization']
+}));
+
 if (process.env.NODE_ENV === "development") {
   const playground = Playground.init(mru);
 
   playground.addGetMethod(
-    "/custom/check",
+    "/custom/hello",
     async (_req: Request, res: Response) => {
       res.json({
-        message: "Playground working!",
+        message: "Hello from the custom route",
       });
     }
   );
 }
+
 const { actions, chain, events } = mru;
 
 app.get("/actions/:hash", async (req: Request, res: Response) => {
@@ -56,56 +58,30 @@ app.get("/blocks/:hash", async (req: Request, res: Response) => {
   return res.send(block);
 });
 
-app.post("/test/:actionName", async (req: Request, res: Response) => {
-  const { actionName } = req.params;
-  const actionReducer = transitions[actionName];
-  console.log(actionName);
-  const body = await getBody(actionName as ActionName, walletOne);
-  console.log('body');
-  console.log(body);
-  const response = await fetch(`http://localhost:5001/${actionName}`, {
-    method: "POST",
-    body,
-    headers: {
-      "Content-Type": "application/json",
-    },
-  });
-  console.log(response);
-  const json = await response.json();
-  console.log(json);
-  res.json(json);
-
-});
-
-
-app.post("/:actionName", async (req: Request, res: Response) => {
-  const { actionName } = req.params;
-  const actionReducer = transitions[actionName];
-  const body = await getBody(actionName as ActionName, walletOne);
-
+app.post("/:reducerName", async (req: Request, res: Response) => {
+  const { reducerName } = req.params;
+  const {id, total_mints, quality_mints} = req.body;
+  console.log(id, total_mints, quality_mints, req.body);
+  const actionReducer = transitions[reducerName];
 
   if (!actionReducer) {
     res.status(400).send({ message: "no reducer for action" });
     return;
   }
-  const action = actionName as keyof typeof schemas;
-
-  const { msgSender, signature, payload } = req.body as {
-    msgSender: string;
-    signature: string;
-    payload: any;
-  };
+  const action = reducerName as keyof typeof schemas;
+  type ActionName = keyof typeof schemas;
+  const wallet = new Wallet(`0x${process.env.PRIVATE_KEY}`);
+  const response = await getBody(reducerName as ActionName, wallet, id, total_mints, quality_mints);
+  const { msgSender, signature, inputs } = response;
+  // console.log(msgSender);
+  // console.log(signature);
+  // console.log(inputs);
 
   const schema = schemas[action];
-  console.log(schema);
-  console.log(msgSender, signature, payload);
+
   try {
-    const newAction = schema.actionFrom({
-      msgSender,
-      signature,
-      inputs: payload,
-    });
-    const ack = await mru.submitAction(actionName, newAction);
+    const newAction = schema.actionFrom({ msgSender, signature, inputs });
+    const ack = await mru.submitAction(reducerName, newAction);
     res.status(201).send({ ack });
   } catch (e: any) {
     res.status(400).send({ error: e.message });
@@ -133,6 +109,7 @@ app.get("/score/:fid", (_req: Request, res: Response) => {
   return res.send({ userScore });
 });
 
+type ActionName = keyof typeof schemas;
 
 app.get("/getEIP712Types/:action", (_req: Request, res: Response) => {
   // @ts-ignore
@@ -142,6 +119,6 @@ app.get("/getEIP712Types/:action", (_req: Request, res: Response) => {
   return res.send({ eip712Types });
 });
 
-app.listen(5001, () => {
-  console.log("listening on port 5001");
+app.listen(5050, () => {
+  console.log("listening on port 5050");
 });

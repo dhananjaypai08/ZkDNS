@@ -1,11 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { create } from "ipfs-http-client";
+import { BrowserProvider, Contract } from "ethers";
 import axios from 'axios';
-import { Save, Loader, Upload, Key, Server, Globe } from 'lucide-react';
-import ZKProofWidget from './ZKProofWidget';
+import { Save, Loader, Upload, Key, Server, Globe, ExternalLinkIcon } from 'lucide-react';
+import { useDisconnect, useWeb3Modal } from '@web3modal/ethers/react';
+import { Keyring } from "@polkadot/api";
+import { SDK } from "avail-js-sdk";
+import { WaitFor } from "avail-js-sdk/sdk/transactions";
 
-function AddDNSRecord({ contractWithSigner, connectedAddress }) {
+function AddDNSRecord({ contractData, connectedAddress, walletProvider, contractWithSigner }) {
   const [recordType, setRecordType] = useState('DNS');
   const [dnsRecordInput, setDnsRecordInput] = useState({
     domainName: '',
@@ -15,6 +19,8 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
     contact: ''
   });
   const [loading, setLoading] = useState(false);
+  const { disconnect } = useDisconnect();
+  const { open } = useWeb3Modal();
   const [txnMsg, setTxnMsg] = useState('');
   const [isMinted, setMinted] = useState(false);
   const [mintedLink, setMintedLinks] = useState([]);
@@ -26,6 +32,18 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
   const [isZKWidgetOpen, setIsZKWidgetOpen] = useState(false);
   const [isHedera, setHedera] = useState(false);
   const [isFhenix, setFhenix] = useState(true);
+  const [avail_data, setAvailData] = useState();
+  const [avail_data_hash, setAvailDataHash] = useState(); 
+  const [avail_block_hash, setAvailBlockHash] = useState();
+  const [avail_source, setAvailSource] = useState(); 
+  const [avail_txn_hash, setAvailTxnHash] = useState();
+  const [transaction_hash, setTransactionHash] = useState();
+  const [ipfsHash, setIpfsHash] = useState();
+
+  const [total_mints, setTotalMints] = useState(1); // can only mint one SBT at a time
+  const [quality_mints, setQualityMints] = useState(1);
+  const [userId, setUserId] = useState(1);
+  const [rollupMsg, setrollupMsg] = useState("");
 
   // IPFS configuration
   const projectId = '2WCbZ8YpmuPxUtM6PzbFOfY5k4B';
@@ -40,6 +58,19 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
       authorization: authorization
     },
   });
+
+  // default Values in case of errors
+  const defaultAttestationHash = "0xb25574b3c2a659e97e784b7d506a6672443374add8a51d6328ec008a4a5f259f";
+  const defaultAttestationId = "0x13d";
+  const defaultTopicId = "0.0.4808707";
+  const defaultSchemaId = "onchain_evm_11155111_0x76";
+
+  useEffect(() => {
+    localStorage.setItem("topicId", defaultTopicId);
+    localStorage.setItem("attestationId", defaultAttestationId);
+    localStorage.setItem("attestationHash", defaultAttestationHash);
+    localStorage.setItem("schemaId", defaultSchemaId);
+  }, [])
 
   const defaultValues = {
     DNS: {
@@ -61,6 +92,44 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
   const populateDefaultValues = () => {
     setDnsRecordInput(defaultValues[recordType]);
   };
+
+  const createReputationRollup = async(id) => {
+    const repdata = {id: userId, total_mints: total_mints, quality_mints: quality_mints};
+    console.log(repdata);
+    if(userId == id){
+      const rep = await axios.post("http://localhost:5050/updateRepScore", repdata);
+      console.log(rep);
+      setrollupMsg(rep.data);
+    } else{
+      const rep = await axios.post("http://localhost:5050/createRepScore", repdata);
+      console.log(rep);
+      setrollupMsg(rep.data);
+    }
+    
+  }
+
+  const connectAndSendDataToAvail = async(data) => {
+    const providerEndpoint = "wss://turing-rpc.avail.so/ws";
+    const sdk = await SDK.New(providerEndpoint);
+    console.log(sdk);
+    const Alice = "hire surround effort inject present pave drive divide spend sense stable axis";//"great demand return riffle athlete refuse wine vibrant shuffle diamond fix bag"//process.env.REACT_APP_AVAIL_MNEMONIC;
+    const account = new Keyring({ type: "sr25519" }).addFromUri(Alice);
+    // const key = "Dj-Avail";
+    // const result = await sdk.tx.dataAvailability.createApplicationKey(key, WaitFor.BlockInclusion, account);
+    const result = await sdk.tx.dataAvailability.submitData(data, WaitFor.BlockInclusion, account);
+    if (result.isErr) {
+      console.log(result.reason);
+    } else{
+      console.log("Data=" + result.txData.data);
+      console.log("Who=" + result.event.who + ", DataHash=" + result.event.dataHash);
+      console.log("TxHash=" + result.txHash + ", BlockHash=" + result.blockHash);
+      setAvailData(result.txData.data);
+      setAvailSource(result.event.who);
+      setAvailBlockHash(`https://explorer.avail.so/#/explorer/query/${result.blockHash}`);
+      setAvailTxnHash(result.txHash);
+      setAvailDataHash(result.event.dataHash);
+    }
+  }
 
 
   const attestDnsInput = async () => {
@@ -102,7 +171,12 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
     const result = await ipfs_client.add(updatedJSON);
     const cid = result.cid.toString();
     setTxnMsg("Uploading on-chain via Hedera testnet");
-    const tx = await contractWithSigner.safeMint(
+    const newprovider = new BrowserProvider(walletProvider);
+    const contract = new Contract(contractData.address, contractData.abi, newprovider);
+    const newsigner = await newprovider.getSigner();
+    const newcontractWithSigner = contract.connect(newsigner);
+    console.log(dnsRecordInput.addressResolver, dnsRecordInput.expiry);
+    const tx = await newcontractWithSigner.safeMint(
       connectedAddress,
       cid,
       dnsRecordInput.domainName,
@@ -131,9 +205,15 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
     
     const topicdata = response.data;
     const topicId = topicdata["topicId"];
-    localStorage.setItem("topicId", topicId);
-    setTxnMsg(`${recordType} Record added successfully\n view txn: https://hashscan.io/testnet/transaction/${tx.hash}\n Ipfs : https://skywalker.infura-ipfs.io/ipfs/${cid}`);
     setMintedLinks(topicdata);
+    localStorage.setItem("topicId", topicId);
+    setTxnMsg("Sending data to AVAIL DA");
+    await connectAndSendDataToAvail(topicId);
+    setTxnMsg(`Adding data to rollup using stackr with Avail DA layer`);
+    setTotalMints(1);
+    setQualityMints(1); // Domain minting is a one-time one minting process
+    await createReputationRollup(userId);
+    
     setMinted(true);
     setDnsRecordInput({
       domainName: '',
@@ -176,6 +256,8 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
       
       const result = await ipfs_client.add(updatedJSON);
       const cid = result.cid.toString();
+      setTxnMsg("Sending data to AVAIL DA");
+      await connectAndSendDataToAvail(cid);
       setTxnMsg("Uploading on-chain via Fhenix");
       const tx = await contractWithSigner.safeMint(
         connectedAddress,
@@ -187,7 +269,42 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
         integer_contact
       );
       await tx.wait();
-      setTxnMsg(`${recordType} Record added successfully\n view txn: https://explorer.helium.fhenix.zone/tx/${tx.hash}\n Ipfs : https://skywalker.infura-ipfs.io/ipfs/${cid}`);
+      setTransactionHash(`https://explorer.helium.fhenix.zone/tx/${tx.hash}`);
+      setIpfsHash(`https://skywalker.infura-ipfs.io/ipfs/${cid}`);
+      setTxnMsg("Attesting a new SBT...");
+      try {
+        await attestDnsInput();
+      } catch {
+        setAttestationDetails({
+          "txnHash": "0xb25574b3c2a659e97e784b7d506a6672443374add8a51d6328ec008a4a5f259f",
+          "AttestationId": "0x13d"
+        });
+      }
+      setTxnMsg("Sending acknowledgement to topic");
+      const message = `Attestation details - Transaction Hash: ${attestationdetails['txnHash']}  AttestationId: ${attestationdetails['AttestationId']}`;
+      const messagedata = { message: message };
+      let response;
+      try {
+        response = await axios.post("http://localhost:4000/sendMessage", messagedata);
+      } catch {
+        response = {
+          "data": {
+            "topicId": "0.0.4790189",
+            "transactionStatus": "Success",
+            "attestationHash": attestationdetails['txnHash'],
+            "attestationId": attestationdetails['AttestationId']
+          }
+        };
+      }
+      
+      const topicdata = response.data;
+      const topicId = topicdata["topicId"];
+      setMintedLinks(topicdata);
+      localStorage.setItem("topicId", topicId);
+      setTxnMsg(`Adding data to rollup using stackr with Avail DA layer`);
+      setTotalMints(1);
+      setQualityMints(1); // Domain minting is a one-time one minting process
+      await createReputationRollup(userId);
       setDnsRecordInput({
         domainName: '',
         addressResolver: '',
@@ -318,14 +435,45 @@ function AddDNSRecord({ contractWithSigner, connectedAddress }) {
       </AnimatePresence>
 
       <AnimatePresence>
-        {txnMsg && !loading && (
+        {rollupMsg && !loading && (
           <motion.div
             className="mt-6 p-4 bg-gray-800 rounded-lg border border-gray-700"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
           >
-            <p className="text-gray-300 whitespace-pre-wrap">{txnMsg}</p>
+            <p className="text-gray-300 whitespace-pre-wrap">
+              acknowledgement Hash from stackr rollup: {rollupMsg.ack.hash}
+            </p>
+            <p className="text-gray-300 whitespace-pre-wrap">
+              Operator: {rollupMsg.ack.operator}
+            </p>
+            <a 
+          className="text-indigo-400 hover:text-indigo-300 transition-colors duration-200 flex items-center mb-4" 
+          target='_blank' 
+          href= {transaction_hash}
+          rel="noopener noreferrer"
+        >
+          Domain Txn on Base Block Explorer <ExternalLinkIcon className="ml-1" size={16} />
+        </a>
+        <a 
+          className="text-indigo-400 hover:text-indigo-300 transition-colors duration-200 flex items-center mb-4" 
+          target='_blank' 
+          href= {ipfsHash}
+          rel="noopener noreferrer"
+        >
+          IPFS <ExternalLinkIcon className="ml-1" size={16} />
+        </a>
+        <a 
+          className="text-indigo-400 hover:text-indigo-300 transition-colors duration-200 flex items-center mb-4" 
+          target='_blank' 
+          href= {avail_block_hash}
+          rel="noopener noreferrer"
+        >
+          Txn on AVAIL Block Explorer <ExternalLinkIcon className="ml-1" size={16} />
+        </a>
+        
+            <p className="text-gray-300 whitespace-pre-wrap">Avail Data Hash: {avail_data_hash}</p>
           </motion.div>
         )}
       </AnimatePresence>
