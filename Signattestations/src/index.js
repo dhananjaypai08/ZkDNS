@@ -51,6 +51,7 @@ const client = new SignProtocolClient(SpMode.OnChain, {
 });
 
 async function createNotaryAttestation(domain_name, address_resolver, recorder_type, expiry, contact) {
+    // create a notray attestaion for the given schema data
     const res = await client.createAttestation({
       schemaId: "0x76",
       data: {
@@ -66,6 +67,7 @@ async function createNotaryAttestation(domain_name, address_resolver, recorder_t
 }
 
 async function makeAttestationRequest(endpoint, options) {
+    // make an attestation to the given enpoint 
     const url = `https://testnet-rpc.sign.global/api/${endpoint}`;
     const res = await axios.request({
       url,
@@ -83,6 +85,7 @@ async function makeAttestationRequest(endpoint, options) {
 }
 
 async function queryAttestations() {
+  // Query your attestations
     const response = await makeAttestationRequest("index/attestations", {
       method: "GET",
       params: {
@@ -93,7 +96,7 @@ async function queryAttestations() {
       },
     });
   
-    // Make sure the request was successfully processed.
+    
     if (!response.success) {
       return {
         success: false,
@@ -101,7 +104,6 @@ async function queryAttestations() {
       };
     }
   
-    // Return a message if no attestations are found.
     if (response.data?.total === 0) {
       return {
         success: false,
@@ -109,7 +111,6 @@ async function queryAttestations() {
       };
     }
   
-    // Return all attestations that match our query.
     return {
       success: true,
       attestations: response.data.rows,
@@ -117,18 +118,11 @@ async function queryAttestations() {
 }
 
 app.get('/checkAvail', async(req, res) => {
-  // Retrieve user data from your database or data source
   const api = await ApiPromise.create({ provider: wsProvider });
   console.log(api.genesisHash.toHex());
   // The actual address that we will use
   const ADDR = '5G95nun8kzRo8W9iP35EA9xzpFUGbyikHeYVCpHtwp7i8h6e';
 
-  // Retrieve the chain name
-  const chain = await api.rpc.system.chain();
-  // console.log(chain);
-  // Retrieve the latest header
-  const lastHeader = await api.rpc.chain.getHeader();
-  //console.log(lastHeader);
   // The actual address that we will use
   const newADDR = '5DTestUPts3kjeXSTMyerHihn1uwMfLj8vU8sqF7qYrFabHE';
 
@@ -290,6 +284,7 @@ app.get('/getMessages', async(req, res) => {
 });
 
 app.post('/getSSVdata', async(req, res) =>{
+   // get the ssv subgraph data for the given testent query
   let ssvquery = req.body.query;
   console.log(ssvquery);
   const url = "https://api.studio.thegraph.com/proxy/71118/ssv-network-holesky/version/latest";

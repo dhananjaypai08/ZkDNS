@@ -87,7 +87,7 @@ async def compile_circuit():
                                 capture_output=True, text=True, check=True)
         return {"message": "Circuit compiled successfully", "output": result.stdout}
     except subprocess.CalledProcessError as e:
-        return {"message": "Circuit Compiled"}
+        return {"Errormessage": e}
 
 @app.get("/generate_witness")
 async def generate_witness(contact: str):
@@ -101,7 +101,7 @@ async def generate_witness(contact: str):
                                 capture_output=True, text=True, check=True)
         return {"message": "Witness generated successfully", "output": result.stdout}
     except Exception as e:
-        return {"message": "Witness generated"}
+        return {"Errormessage": e}
 
 @app.get("/export_zkey")
 async def export_zkey():
@@ -117,7 +117,7 @@ async def export_zkey():
         return {"message": "ZKey exported successfully", "setup": setup_result.stdout, 
                 "contribute": contribute_result.stdout, "export": export_result.stdout}
     except Exception as e:
-        return {"message": "Zkey Exported"}
+        return {"Errormessage": e}
 
 @app.get("/generate_proof")
 async def generate_proof():
@@ -126,20 +126,18 @@ async def generate_proof():
                                 capture_output=True, text=True, check=True)
         return {"message": "Proof generated successfully", "output": result.stdout}
     except Exception as e:
-        time.sleep(2)
-        return {"message": "Proof generated"}
+        return {"Errormessage": e}
 
 @app.get("/verify_proof")
 async def verify_proof(contact: str):
     try:
         result = subprocess.run(["snarkjs", "groth16", "verify", "verification_key.json", "public.json", "proof.json"], 
                                 capture_output=True, text=True, check=True)
-        return {"message": "Proof verified successfully", "output": result.stdout}
+        if "ok" in result.stdout.lower():
+            return {"message": "Proof verified successfully", "output": result.stdout}
+        return {"Errormessage": "Not verified"}
     except Exception as e:
-        time.sleep(2)
-        if contact in WHILTELISTS:
-            return {"message": "Proof verified!"}
-        return {"message": "Not verified"}
+        return {"Errormessage": e}
 
 if __name__ == "__main__":
     uvicorn.run("main:app", port=8000, reload=True)

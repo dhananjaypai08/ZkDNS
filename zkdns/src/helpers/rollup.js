@@ -10,23 +10,23 @@ const domain = {
     verifyingContract: "0x62321E96D28cebe2445E33aFA0D72E1EA58Eac30"
 }
 
-export const getBody = async (actionName, wallet) => {
+export const getBody = async (actionName, wallet, fid, totalMints, qualityMints) => {
   const walletAddress = wallet.address;
   const date = new Date();
   const inputs =
     actionName == "createRepScore"
       ? {
           actionMessage: "0x",
-          fid: 2,
-          totalMints: 3,
-          qualityMints: 1,
+          fid: fid,
+          totalMints: totalMints,
+          qualityMints: qualityMints,
           timestamp: Math.round(date.getTime() / 1000),
         }
       : {
         actionMessage: "0x",
-        fid: 2,
-        totalMints: 3,
-        qualityMints: 1,
+        fid: fid,
+        totalMints: totalMints,
+        qualityMints: qualityMints,
         timestamp: Math.round(date.getTime() / 1000),
         };
 

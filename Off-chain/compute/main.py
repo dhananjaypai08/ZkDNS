@@ -46,6 +46,8 @@ data = json.load(file)
 file.close()
 contract_abi = data["abi"]
 contract_address = data["address"]
+contract = "0xb5ddC78A82227C25864F269a0fc58d4166AA26b0"
+txn_hash = "0x0ce59482a47c367c57e2dc14d559990af9cb1aef86ff1af726cee9e75c1c2827"
 
 RPC_PROVIDER_APIKEY = os.environ.get('RPC_PROVIDER_APIKEY')
 RPC_PROVIDER_URL = 'https://rpc.testnet.rootstock.io/' + RPC_PROVIDER_APIKEY
@@ -62,7 +64,7 @@ account = w3.eth.account.from_key(private_key)
     
 @app.get("/forwardToResolver")
 def forward_to_dns_resolver(domain: str, address_resolver: str, resolver_port=53):
-    # Create a new DNS query message
+    # Create a new DNS query message in traditional way
     print(domain, address_resolver)
     if not address_resolver or address_resolver=="null" or len(address_resolver.split("."))<4:
         address_resolver = "8.8.8.8" #default
@@ -102,6 +104,7 @@ async def getEnvioData(network: str):
 
 @app.get("/getEnvioContractdata")
 async def getEnvioContractdata(network: str):
+    # Get all the wallet transfer data of diff addresses
     networkdetails = NETWORK_URLS_TESTNET.get(network)
     if not networkdetails: return "Please provide a valid network name"
     url, chainId = networkdetails
@@ -111,7 +114,8 @@ async def getEnvioContractdata(network: str):
 
 @app.get("/getLogsEvent")
 async def getLogs(network: str):
-    contract = "0xb5ddC78A82227C25864F269a0fc58d4166AA26b0"
+    # Get logs of a given network of a contract
+    
     networkdetails = NETWORK_URLS_TESTNET.get(network)
     if not networkdetails: return "Please provide a valid network name"
     url, chainId = networkdetails
@@ -122,6 +126,7 @@ async def getLogs(network: str):
 
 @app.get("/getBlockTransactions")
 async def getLogs(network: str):
+    # Get Block Transaction logs of block
     networkdetails = NETWORK_URLS_TESTNET.get(network)
     if not networkdetails: return "Please provide a valid network name"
     url, chainId = networkdetails
@@ -132,7 +137,7 @@ async def getLogs(network: str):
 
 @app.get("/getTxnEvents")
 async def getLogstxn(network: str):
-    txn_hash = "0x0ce59482a47c367c57e2dc14d559990af9cb1aef86ff1af726cee9e75c1c2827"
+    # Try to fetch transaction events of one transaction
     networkdetails = NETWORK_URLS_TESTNET.get(network)
     if not networkdetails: return "Please provide a valid network name"
     url, chainId = networkdetails

@@ -38,8 +38,8 @@ function SearchDNSRecord({ contract }) {
     setTxnMsg("Decrypting DNS Record...");
     try {
       let result = await contract.getDNS(searchDomainName);
-      let addr_resolver = localStorage.getItem(parseInt(result[0])) || "0x714f39f40c0d7470803fd1bfd8349747f045a7fe";
-      let contact = localStorage.getItem(parseInt(result[3])) || "dhananjay2002pai@gmail.com";
+      let addr_resolver = localStorage.getItem(parseInt(result[0]));
+      let contact = localStorage.getItem(parseInt(result[3]));
       
       const data = {
         "_addr_resolver": addr_resolver,
@@ -108,7 +108,7 @@ function SearchDNSRecord({ contract }) {
     try {
       return await axios.get("http://localhost:4000/queryAttestation");
     } catch {
-      return {"data": {"attestations": [{"fullSchemaId": "test", "transactionHash": "TestHash"}]}};
+      return {"data": {"attestations": [{"fullSchemaId": "Error", "transactionHash": "Error"}]}};
     }
   };
 

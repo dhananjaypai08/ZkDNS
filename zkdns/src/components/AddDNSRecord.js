@@ -26,10 +26,7 @@ function AddDNSRecord({ contractData, connectedAddress, walletProvider, contract
   const [isMinted, setMinted] = useState(false);
   const [mintedLink, setMintedLinks] = useState([]);
   const [isAttested, setAttestationstatus] = useState(false);
-  const [attestationdetails, setAttestationDetails] = useState({
-    "txnHash": "0xb25574b3c2a659e97e784b7d506a6672443374add8a51d6328ec008a4a5f259f",
-    "AttestationId": "0x13d"
-  });
+  const [attestationdetails, setAttestationDetails] = useState();
   const [isZKWidgetOpen, setIsZKWidgetOpen] = useState(false);
   const [isHedera, setHedera] = useState(false);
   const [isFhenix, setFhenix] = useState(true);
@@ -48,33 +45,6 @@ function AddDNSRecord({ contractData, connectedAddress, walletProvider, contract
   const [userId, setUserId] = useState(1);
   const [rollupMsg, setrollupMsg] = useState("");
 
-  // IPFS configuration
-  const projectId = '2WCbZ8YpmuPxUtM6PzbFOfY5k4B';
-  const projectSecretKey = 'c8b676d8bfe769b19d88d8c77a9bd1e2';
-  const authorization = "Basic " + btoa(projectId + ":" + projectSecretKey);
-  const ipfs_client = create({
-    host: "ipfs.infura.io",
-    port: 5001,
-    protocol: "https",
-    apiPath: "/api/v0",
-    headers: {
-      authorization: authorization
-    },
-  });
-
-  // default Values in case of errors
-  const defaultAttestationHash = "0xb25574b3c2a659e97e784b7d506a6672443374add8a51d6328ec008a4a5f259f";
-  const defaultAttestationId = "0x13d";
-  const defaultTopicId = "0.0.4808707";
-  const defaultSchemaId = "onchain_evm_11155111_0x76";
-
-  useEffect(() => {
-    localStorage.setItem("topicId", defaultTopicId);
-    localStorage.setItem("attestationId", defaultAttestationId);
-    localStorage.setItem("attestationHash", defaultAttestationHash);
-    localStorage.setItem("schemaId", defaultSchemaId);
-  }, [])
-
   const defaultValues = {
     DNS: {
       domainName: 'google.com',
@@ -90,10 +60,6 @@ function AddDNSRecord({ contractData, connectedAddress, walletProvider, contract
       expiry: '2030-01-01',
       contact: 'vitalik@ethereum.org'
     }
-  };
-
-  const populateDefaultValues = () => {
-    setDnsRecordInput(defaultValues[recordType]);
   };
 
   const createReputationRollup = async(id) => {
@@ -114,8 +80,8 @@ function AddDNSRecord({ contractData, connectedAddress, walletProvider, contract
   const getAvailAccount = async() =>{
     const providerEndpoint = "wss://turing-rpc.avail.so/ws";
     const sdk = await SDK.New(providerEndpoint);
-    const Alice = "hire surround effort inject present pave drive divide spend sense stable axis";//"great demand return riffle athlete refuse wine vibrant shuffle diamond fix bag"//process.env.REACT_APP_AVAIL_MNEMONIC;
-    const account = new Keyring({ type: "sr25519" }).addFromUri(Alice);
+    const KEY = process.env.REACT_APP_MNEMONIC_KEY;
+    const account = new Keyring({ type: "sr25519" }).addFromUri(KEY);
     return {account: account, sdk: sdk};
   }
 
@@ -129,10 +95,9 @@ function AddDNSRecord({ contractData, connectedAddress, walletProvider, contract
       console.log(result.reason);
       setStakedMessage(result.reason);
     }
- 
-    // console.log("Stash=" + result.event.stash + ", Amount=" + result.event.amount);
+
     console.log("TxHash=" + result.txHash + ", BlockHash=" + result.blockHash);
-    setStakedMessage("Staked Avail: TxnHash="+"0x16f098383b2ccc8b2562a35d2f7c6cddff23cefc6e62823deb3a20503f7f9f24");
+    setStakedMessage("Staked Avail: TxnHash="+result.txHash);
     stakedStatus(true);
   }
 
@@ -146,7 +111,6 @@ function AddDNSRecord({ contractData, connectedAddress, walletProvider, contract
       setStakedMessage(result.reason);
     }
   
-    // console.log("Stash=" + result.event.stash + ", Amount=" + result.event.amount);
     console.log("TxHash=" + result.txHash + ", BlockHash=" + result.blockHash);
     setStakedMessage("Staked Avail: TxnHash="+result.txHash);
     stakedStatus(false);
@@ -156,10 +120,8 @@ function AddDNSRecord({ contractData, connectedAddress, walletProvider, contract
     const providerEndpoint = "wss://turing-rpc.avail.so/ws";
     const sdk = await SDK.New(providerEndpoint);
     console.log(sdk);
-    const Alice = "hire surround effort inject present pave drive divide spend sense stable axis";//"great demand return riffle athlete refuse wine vibrant shuffle diamond fix bag"//process.env.REACT_APP_AVAIL_MNEMONIC;
-    const account = new Keyring({ type: "sr25519" }).addFromUri(Alice);
-    // const key = "Dj-Avail";
-    // const result = await sdk.tx.dataAvailability.createApplicationKey(key, WaitFor.BlockInclusion, account);
+    const KEY = process.env.MNEMONIC_KEY;
+    const account = new Keyring({ type: "sr25519" }).addFromUri(KEY);
     const result = await sdk.tx.dataAvailability.submitData(data, WaitFor.BlockInclusion, account);
     if (result.isErr) {
       console.log(result.reason);
@@ -186,8 +148,8 @@ function AddDNSRecord({ contractData, connectedAddress, walletProvider, contract
       localStorage.setItem("topicId", attestresponse.data.attestationId);
     } catch {
       setAttestationDetails({
-        "txnHash": "0xb25574b3c2a659e97e784b7d506a6672443374add8a51d6328ec008a4a5f259f",
-        "AttestationId": "0x13d"
+        "txnHash": "Error something went wrong",
+        "AttestationId": "Attestation not found"
       });
     }
   };
@@ -212,10 +174,8 @@ function AddDNSRecord({ contractData, connectedAddress, walletProvider, contract
     }
     setAttestationstatus(true);
     setTxnMsg("Adding data to Basin Object store");
-    const result = await ipfs_client.add(updatedJSON);
-    const cid = result.cid.toString();
-    //const result = await axios.post("http://localhost:8000/adddatatobasin");
-    // const cid = result.data;
+    const result = await axios.post("http://localhost:8000/adddatatobasin");
+    const cid = result.data;
     setTxnMsg("Uploading on-chain via Hedera testnet");
     const newprovider = new BrowserProvider(walletProvider);
     const contract = new Contract(contractData.address, contractData.abi, newprovider);
@@ -241,10 +201,10 @@ function AddDNSRecord({ contractData, connectedAddress, walletProvider, contract
     } catch {
       response = {
         "data": {
-          "topicId": "0.0.4790189",
-          "transactionStatus": "Success",
-          "attestationHash": attestationdetails['txnHash'],
-          "attestationId": attestationdetails['AttestationId']
+          "topicId": "Can't be found",
+          "transactionStatus": "Failure",
+          "attestationHash": 0,
+          "attestationId": 0
         }
       };
     }
@@ -273,6 +233,7 @@ function AddDNSRecord({ contractData, connectedAddress, walletProvider, contract
   };
 
   function stringToInteger(str) {
+    // Convert a given string to a unique integer and map on client side for decryption and encrypt 
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
@@ -299,10 +260,8 @@ function AddDNSRecord({ contractData, connectedAddress, walletProvider, contract
         "image": "${integer_contact}"
       }`;
       setTxnMsg("Adding Data to Basin Object store");
-      //const result = await axios.post("http://localhost:8000/adddatatobasin");
-      // const cid = result.data;
-      const result = await ipfs_client.add(updatedJSON);
-      const cid = result.cid.toString();
+      const result = await axios.post("http://localhost:8000/adddatatobasin");
+      const cid = result.data;
       setTxnMsg("Sending data to AVAIL DA");
       await connectAndSendDataToAvail(cid);
       setTxnMsg("Uploading on-chain via Fhenix");
@@ -328,8 +287,8 @@ function AddDNSRecord({ contractData, connectedAddress, walletProvider, contract
         await attestDnsInput();
       } catch {
         setAttestationDetails({
-          "txnHash": "0xb25574b3c2a659e97e784b7d506a6672443374add8a51d6328ec008a4a5f259f",
-          "AttestationId": "0x13d"
+          "txnHash": "Error",
+          "AttestationId": "Attestation not found"
         });
       }
       setTxnMsg("Sending acknowledgement to topic");
@@ -341,10 +300,10 @@ function AddDNSRecord({ contractData, connectedAddress, walletProvider, contract
       } catch {
         response = {
           "data": {
-            "topicId": "0.0.4790189",
-            "transactionStatus": "Success",
-            "attestationHash": attestationdetails['txnHash'],
-            "attestationId": attestationdetails['AttestationId']
+            "topicId": "Error",
+            "transactionStatus": "Failed",
+            "attestationHash": 0,
+            "attestationId": 0
           }
         };
       }
