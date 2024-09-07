@@ -151,7 +151,7 @@ For running the project : [Running the Project](#running-the-project)
 
 **Usage and benefits:** 
 1. Provides an additional network option for domain tokenization.
-2. Integrates with Chainlink VRF Automation for upkeep checks, ensuring system availability and alerting capabilities.
+2. Integrates with Chainlink  Automation for upkeep checks, ensuring system availability and alerting capabilities.
 
 **What makes it stand out:** The integration with Chillz expands the reach of ZkDNS, making it more accessible to a wider range of users and enhancing its interoperability across different blockchain ecosystems.
 
@@ -220,7 +220,7 @@ For running the project : [Running the Project](#running-the-project)
 2. Provides automated alerts for system maintenance needs.
 3. Enhances the reliability of the DNS record management process.
 
-**What makes it stand out:** The integration of Chainlink VRF Automation sets ZkDNS apart by providing a decentralized, tamper-proof method for maintaining system health and ensuring high availability of DNS services.
+**What makes it stand out:** The integration of Chainlink  Automation sets ZkDNS apart by providing a decentralized, tamper-proof method for maintaining system health and ensuring high availability of DNS services.
 
 ### Tableland Basin
 
