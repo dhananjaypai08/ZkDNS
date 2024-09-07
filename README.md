@@ -147,7 +147,7 @@ For running the project : [Running the Project](#running-the-project)
 
 **How it's used:** ZkDNS deploys smart contracts on the Chillz Spice testnetwork, allowing domain owners to tokenize their DNS records across multiple networks.
 
-**Solditiy Code section:** [https://github.com/dhananjaypai08/ZkDNS/blob/master/zkdns/src/contracts/ZKDNS.sol](https://github.com/dhananjaypai08/ZkDNS/blob/master/zkdns/src/contracts/ZKDNS.sol)
+**Solditiy Code section:** [https://github.com/dhananjaypai08/ZkDNS/blob/master/zkdns/src/contracts/ChainLinkUtility.sol](https://github.com/dhananjaypai08/ZkDNS/blob/master/zkdns/src/contracts/ChainLinkUtility.sol)
 
 **Usage and benefits:** 
 1. Provides an additional network option for domain tokenization.
