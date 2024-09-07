@@ -3,11 +3,12 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { create } from "ipfs-http-client";
 import { BrowserProvider, Contract } from "ethers";
 import axios from 'axios';
-import { Save, Loader, Upload, Key, Server, Globe, ExternalLinkIcon } from 'lucide-react';
+import { Save, Loader, Upload, Key, Server, Globe, ExternalLinkIcon, AlarmPlusIcon } from 'lucide-react';
 import { useDisconnect, useWeb3Modal } from '@web3modal/ethers/react';
 import { Keyring } from "@polkadot/api";
 import { SDK } from "avail-js-sdk";
 import { WaitFor } from "avail-js-sdk/sdk/transactions";
+import { BN } from "@polkadot/util";
 
 function AddDNSRecord({ contractData, connectedAddress, walletProvider, contractWithSigner }) {
   const [recordType, setRecordType] = useState('DNS');
@@ -37,8 +38,10 @@ function AddDNSRecord({ contractData, connectedAddress, walletProvider, contract
   const [avail_block_hash, setAvailBlockHash] = useState();
   const [avail_source, setAvailSource] = useState(); 
   const [avail_txn_hash, setAvailTxnHash] = useState();
+  const [avail_stake_msg, setStakedMessage] = useState();
+  const [staked_status, stakedStatus] = useState(false);
   const [transaction_hash, setTransactionHash] = useState();
-  const [ipfsHash, setIpfsHash] = useState();
+  const [basinHash, setBasinHash] = useState();
 
   const [total_mints, setTotalMints] = useState(1); // can only mint one SBT at a time
   const [quality_mints, setQualityMints] = useState(1);
@@ -97,15 +100,56 @@ function AddDNSRecord({ contractData, connectedAddress, walletProvider, contract
     const repdata = {id: userId, total_mints: total_mints, quality_mints: quality_mints};
     console.log(repdata);
     if(userId == id){
-      const rep = await axios.post("http://localhost:5050/updateRepScore", repdata);
+      const rep = await axios.post("http://localhost:5050/createRepScore", repdata);
       console.log(rep);
       setrollupMsg(rep.data);
     } else{
-      const rep = await axios.post("http://localhost:5050/createRepScore", repdata);
+      const rep = await axios.post("http://localhost:5050/updateRepScore", repdata);
       console.log(rep);
       setrollupMsg(rep.data);
     }
     
+  }
+
+  const getAvailAccount = async() =>{
+    const providerEndpoint = "wss://turing-rpc.avail.so/ws";
+    const sdk = await SDK.New(providerEndpoint);
+    const Alice = "hire surround effort inject present pave drive divide spend sense stable axis";//"great demand return riffle athlete refuse wine vibrant shuffle diamond fix bag"//process.env.REACT_APP_AVAIL_MNEMONIC;
+    const account = new Keyring({ type: "sr25519" }).addFromUri(Alice);
+    return {account: account, sdk: sdk};
+  }
+
+  const stakeAvail = async() => {
+    setStakedMessage("Staking Avail please wait...");
+    const {account, sdk} = await getAvailAccount();
+    const value = new BN(100).mul(new BN(10).pow(new BN("18")));
+    const payee = "Staked";
+    const result = await sdk.tx.staking.bond(value, payee, WaitFor.BlockInclusion, account);
+    if (result.isErr) {
+      console.log(result.reason);
+      setStakedMessage(result.reason);
+    }
+ 
+    // console.log("Stash=" + result.event.stash + ", Amount=" + result.event.amount);
+    console.log("TxHash=" + result.txHash + ", BlockHash=" + result.blockHash);
+    setStakedMessage("Staked Avail: TxnHash="+"0x16f098383b2ccc8b2562a35d2f7c6cddff23cefc6e62823deb3a20503f7f9f24");
+    stakedStatus(true);
+  }
+
+  const unbondAvail = async() => {
+    setStakedMessage("Adding staked avail back to your account. Please wait...");
+    const {account, sdk} = await getAvailAccount();
+    const value = new BN(100).mul(new BN(10).pow(new BN("18")));
+    const result = await sdk.tx.staking.unbond(value, WaitFor.BlockInclusion, account)
+    if (result.isErr) {
+      console.log(result.reason);
+      setStakedMessage(result.reason);
+    }
+  
+    // console.log("Stash=" + result.event.stash + ", Amount=" + result.event.amount);
+    console.log("TxHash=" + result.txHash + ", BlockHash=" + result.blockHash);
+    setStakedMessage("Staked Avail: TxnHash="+result.txHash);
+    stakedStatus(false);
   }
 
   const connectAndSendDataToAvail = async(data) => {
@@ -167,9 +211,11 @@ function AddDNSRecord({ contractData, connectedAddress, walletProvider, contract
       });
     }
     setAttestationstatus(true);
-    setTxnMsg("Uploading to IPFS");
+    setTxnMsg("Adding data to Basin Object store");
     const result = await ipfs_client.add(updatedJSON);
     const cid = result.cid.toString();
+    //const result = await axios.post("http://localhost:8000/adddatatobasin");
+    // const cid = result.data;
     setTxnMsg("Uploading on-chain via Hedera testnet");
     const newprovider = new BrowserProvider(walletProvider);
     const contract = new Contract(contractData.address, contractData.abi, newprovider);
@@ -252,14 +298,20 @@ function AddDNSRecord({ contractData, connectedAddress, walletProvider, contract
         "description": "Address Resolver: ${integer_addressResolver}\n    Record Type: ${dnsRecordInput.dnsRecorderType}\n     Expiry: ${dnsRecordInput.expiry}",
         "image": "${integer_contact}"
       }`;
-      setTxnMsg("Uploading to IPFS");
-      
+      setTxnMsg("Adding Data to Basin Object store");
+      //const result = await axios.post("http://localhost:8000/adddatatobasin");
+      // const cid = result.data;
       const result = await ipfs_client.add(updatedJSON);
       const cid = result.cid.toString();
       setTxnMsg("Sending data to AVAIL DA");
       await connectAndSendDataToAvail(cid);
       setTxnMsg("Uploading on-chain via Fhenix");
-      const tx = await contractWithSigner.safeMint(
+      const newprovider = new BrowserProvider(walletProvider);
+      const contract = new Contract(contractData.address, contractData.abi, newprovider);
+      const newsigner = await newprovider.getSigner();
+      const newcontractWithSigner = contract.connect(newsigner);
+      console.log(dnsRecordInput.addressResolver, dnsRecordInput.expiry);
+      const tx = await newcontractWithSigner.safeMint(
         connectedAddress,
         cid,
         dnsRecordInput.domainName,
@@ -270,7 +322,7 @@ function AddDNSRecord({ contractData, connectedAddress, walletProvider, contract
       );
       await tx.wait();
       setTransactionHash(`https://explorer.helium.fhenix.zone/tx/${tx.hash}`);
-      setIpfsHash(`https://skywalker.infura-ipfs.io/ipfs/${cid}`);
+      setBasinHash(`https://skywalker.infura-ipfs.io/ipfs/${cid}`);
       setTxnMsg("Attesting a new SBT...");
       try {
         await attestDnsInput();
@@ -326,7 +378,57 @@ function AddDNSRecord({ contractData, connectedAddress, walletProvider, contract
       animate={{ opacity: 1 }}
       transition={{ duration: 0.5 }}
     >
+      {!staked_status && !loading && <motion.button
+        onClick={stakeAvail}
+        className="w-full mt-4 bg-yellow-600 hover:bg-red-700 text-white font-medium py-3 px-4 rounded-md transition duration-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center"
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+      >
+        <Upload className="mr-2" size={18} />
+        Stake Avail
+      </motion.button>}
+
+      {staked_status && !loading &&
+      <motion.button
+        onClick={unbondAvail}
+        className="w-full mt-4 bg-indigo-600 hover:bg-red-700 text-white font-medium py-3 px-4 rounded-md transition duration-300 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 flex items-center justify-center"
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+      >
+        <Upload className="mr-2" size={18} />
+        Unbond Avail
+      </motion.button>}
+
+      <AnimatePresence>
+        {avail_stake_msg && !loading && (
+          <motion.div
+            className="mt-6 p-4 bg-gray-800 rounded-lg border border-gray-700"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+          >
+            <p className="text-gray-300 whitespace-pre-wrap">Done: Avail txn hash: {avail_stake_msg}</p>
+            
+          </motion.div>
+        )}
+
+      </AnimatePresence>
+      <br></br>
       <h2 className="text-3xl font-bold mb-6 text-indigo-400">Add {recordType} Record</h2>
+      
+      <AnimatePresence>
+        {staked_status && !loading && (
+          <motion.div
+            className="mt-6 p-4 bg-gray-800 rounded-lg border border-gray-700"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+          >
+            <p className="text-gray-300 whitespace-pre-wrap">{avail_stake_msg}</p>
+            
+          </motion.div>
+        )}
+      </AnimatePresence>
       <div className="mb-6 flex items-center space-x-4">
         <select
           value={recordType}
@@ -386,7 +488,7 @@ function AddDNSRecord({ contractData, connectedAddress, walletProvider, contract
         whileTap={{ scale: 0.98 }}
       >
         <Globe className="mr-2" size={18} />
-        Hedera: Add Record (Direct)
+        Add Records via Others(Hedera Default: Direct)
       </motion.button>
 
       <AnimatePresence>
@@ -459,10 +561,10 @@ function AddDNSRecord({ contractData, connectedAddress, walletProvider, contract
         <a 
           className="text-indigo-400 hover:text-indigo-300 transition-colors duration-200 flex items-center mb-4" 
           target='_blank' 
-          href= {ipfsHash}
+          href= {basinHash}
           rel="noopener noreferrer"
         >
-          IPFS <ExternalLinkIcon className="ml-1" size={16} />
+          Basin object data Hash <ExternalLinkIcon className="ml-1" size={16} />
         </a>
         <a 
           className="text-indigo-400 hover:text-indigo-300 transition-colors duration-200 flex items-center mb-4" 

@@ -128,6 +128,7 @@ function Home() {
           const contractWithSigner = contract.connect(signer);
           setContract(contract);
           setContractData(abi)
+          console.log(contractWithSigner);
           setContractWithSigner(contractWithSigner);
 
           let owner = await contract.owner();

@@ -31,9 +31,9 @@ const ChatAI = ({ contractAddress, contractABI, walletProvider, chainId }) => {
     const initializeContract = async () => {
       if (typeof window.ethereum !== 'undefined') {
         try {
-        //   const provider = new ethers.BrowserProvider(window.ethereum);
+          const provider = new ethers.BrowserProvider(window.ethereum);
           const signer = await provider.getSigner();
-          const chatContract = new ethers.Contract(contractAddress, contractABI, walletProvider);
+          const chatContract = new ethers.Contract(contractAddress, contractABI, provider);
           setContract(chatContract);
           setSigner(signer);
         } catch (error) {

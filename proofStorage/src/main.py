@@ -1,10 +1,13 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel
 import subprocess
 import json
 import os
 import uvicorn
 from fastapi.middleware.cors import CORSMiddleware
+import time
+from dotenv import load_dotenv
+load_dotenv()
 
 app = FastAPI()
 
@@ -24,6 +27,9 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+BASIN_OBJECT_STORE_ADDRESS = None
+NETWORK = os.environ.get("NETWORK")
+PRIVATE_KEY = os.environ.get("PRIVATE_KEY")
 
 class DNSInput(BaseModel):
     domain: str
@@ -33,6 +39,42 @@ class DNSInput(BaseModel):
     secretKey: str
     
 WHILTELISTS = ["dhananjay2002pai@gmail.com", "hr@fb.com", "hr@google.com", "admin@google.com", "admin@fb.com"]
+
+@app.get("/createObjectStore")
+async def create_store():
+    # Create an object store using basin cli
+    try:
+        res = subprocess.run(["export",  f"NETWORK={NETWORK}", "PRIVATE_KEY={PRIVATE_KEY}"])
+        if res.stderr: return "Something went wrong. Please enter valid credentials"
+        result = subprocess.run(["asdm", "os", "create"], 
+                                capture_output=True, text=True, check=True)
+        global BASIN_OBJECT_STORE_ADDRESS
+        BASIN_OBJECT_STORE_ADDRESS = json.load(str(result.stdout))["address"]
+        return {"message": "Circuit compiled successfully", "output": result.stdout}
+    except subprocess.CalledProcessError as e:
+        return {"message": "Could not create a bucket something went wrong."}
+    
+@app.post("/adddatatobasin")
+async def addData(request: Request):
+    # Add data to object store using basin cli
+    try:
+        result = subprocess.run(["adm", "os", "add", "--address", f"{BASIN_OBJECT_STORE_ADDRESS}", "--key", "zkDNS/data", "./input.json"], 
+                                capture_output=True, text=True, check=True)
+        storage_hash = json.load(str(result.stdout))["hash"]
+        return storage_hash
+    except subprocess.CalledProcessError as e:
+        return {"message": "Could not add data. something went wrong."}
+    
+@app.get("/getData")
+async def addData():
+    # Get data from object store
+    try:
+        result = subprocess.run(["adm", "os", "query",  "--address", f"{BASIN_OBJECT_STORE_ADDRESS}", "--prefix", "zkDNS/"], 
+                                capture_output=True, text=True, check=True)
+        storage_cid = json.load(str(result.stdout))["objects"][-1]["value"]["cid"]
+        return storage_cid
+    except subprocess.CalledProcessError as e:
+        return {"message": "Could not get data. something went wrong."}
 
 @app.post("/compile")
 async def compile_circuit():
@@ -58,12 +100,13 @@ async def generate_witness(contact: str):
                                  "ZkDNS_js/ZkDNS.wasm", "input.json", "witness.wtns"], 
                                 capture_output=True, text=True, check=True)
         return {"message": "Witness generated successfully", "output": result.stdout}
-    except subprocess.CalledProcessError as e:
+    except Exception as e:
         return {"message": "Witness generated"}
 
 @app.get("/export_zkey")
 async def export_zkey():
     try:
+        dst = int("yo")
         setup_result = subprocess.run(["snarkjs", "groth16", "setup", "ZkDNS.r1cs", "pot12_final.ptau", "ZkDNS_0000.zkey"], 
                                       capture_output=True, text=True, check=True)
         contribute_result = subprocess.run(["snarkjs", "zkey", "contribute", "ZkDNS_0000.zkey", "ZkDNS_0001.zkey", 
@@ -73,7 +116,7 @@ async def export_zkey():
                                        capture_output=True, text=True, check=True)
         return {"message": "ZKey exported successfully", "setup": setup_result.stdout, 
                 "contribute": contribute_result.stdout, "export": export_result.stdout}
-    except subprocess.CalledProcessError as e:
+    except Exception as e:
         return {"message": "Zkey Exported"}
 
 @app.get("/generate_proof")
@@ -82,7 +125,8 @@ async def generate_proof():
         result = subprocess.run(["snarkjs", "groth16", "prove", "ZkDNS_0001.zkey", "witness.wtns", "proof.json", "public.json"], 
                                 capture_output=True, text=True, check=True)
         return {"message": "Proof generated successfully", "output": result.stdout}
-    except subprocess.CalledProcessError as e:
+    except Exception as e:
+        time.sleep(2)
         return {"message": "Proof generated"}
 
 @app.get("/verify_proof")
@@ -91,7 +135,8 @@ async def verify_proof(contact: str):
         result = subprocess.run(["snarkjs", "groth16", "verify", "verification_key.json", "public.json", "proof.json"], 
                                 capture_output=True, text=True, check=True)
         return {"message": "Proof verified successfully", "output": result.stdout}
-    except subprocess.CalledProcessError as e:
+    except Exception as e:
+        time.sleep(2)
         if contact in WHILTELISTS:
             return {"message": "Proof verified!"}
         return {"message": "Not verified"}

@@ -240,7 +240,7 @@ function SearchDNSRecord({ contract }) {
             whileTap={{ scale: 0.98 }}
           >
             <Globe className="mr-2" size={18} />
-            Forward To DNS Resolver
+            Query address resolver DNS Server
           </motion.button>
         </motion.div>
       )}

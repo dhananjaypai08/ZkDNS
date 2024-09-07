@@ -35,7 +35,8 @@ const TopicMessages = ({ topicId }) => {
         const attestationResponse = await axios.get(`http://localhost:4000/queryAttestations?id=${schemaId}`);
         setAttestationData(attestationResponse.data);
 
-        const reputationState = await axios.get('http://localhost:5050');
+        let reputationState = await axios.get('http://localhost:5050');
+        console.log(reputationState.data);
         setReputationState(reputationState.data);
       } catch (error) {
         console.error('Error fetching data:', error);

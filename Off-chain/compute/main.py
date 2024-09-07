@@ -11,7 +11,7 @@ import dns.message
 import dns.query
 import dns.resolver
 import dns
-from envioClient import getClient, runQueryBlockData, runQueryLogsData, runQueryTxn, runQueryBlocksTxns
+from envioClient import getClient, runQueryBlockData, runQueryLogsData, runQueryTxn, runQueryBlocksTxns, runWalletQuery
 
 
 load_dotenv()
@@ -38,6 +38,7 @@ app.add_middleware(
 NETWORK_URLS_TESTNET = {"Chillz": ["https://chiliz.hypersync.xyz", 8888], 
                 "Fhenix": ["https://fhenix-testnet.hypersync.xyz", 42069],
                 "Galadriel": ["https://galadrial-devnet.hypersync.xyz", 696969],
+                "Morph": ["https://morph-testnet.hypersync.xyz", 2810]
                 }
 
 file = open(contract.abi_path)
@@ -98,6 +99,15 @@ async def getEnvioData(network: str):
     client = getClient(url)
     response = await runQueryBlockData(client=client)
     return response
+
+@app.get("/getEnvioContractdata")
+async def getEnvioContractdata(network: str):
+    networkdetails = NETWORK_URLS_TESTNET.get(network)
+    if not networkdetails: return "Please provide a valid network name"
+    url, chainId = networkdetails
+    client = getClient(url)
+    response = await runWalletQuery(client)
+    return response 
 
 @app.get("/getLogsEvent")
 async def getLogs(network: str):
