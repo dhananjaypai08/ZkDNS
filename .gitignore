@@ -6,6 +6,7 @@ Off-chain/compute/__pycache__/
 Off-chain/compute/.env
 Off-chain/compute/__pycache__/
 Signattestations/node_modules/
+Signattestations/.env
 proofStorage/env/
 proofStorage/src/__pycache__/
 proofStorage/.env
