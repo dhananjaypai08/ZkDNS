@@ -397,15 +397,15 @@ function AddDNSRecord({ contractData, connectedAddress, walletProvider, contract
           <option value="DNS">DNS</option>
           <option value="ENS">ENS</option>
         </select>
-        <motion.button
-          onClick={populateDefaultValues}
+        {/* <motion.button
+          onClick={defaultValues}
           className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-md transition duration-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-opacity-50 flex items-center"
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
         >
           <Server className="mr-2" size={18} />
           Populate Default Values
-        </motion.button>
+        </motion.button> */}
       </div>
       <form onSubmit={addDNSRecord} className="space-y-4">
         <input
