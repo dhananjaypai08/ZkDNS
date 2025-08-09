@@ -1,36 +1,36 @@
 proofs/env/
 Off-chain/env/
-zkdns/node_modules/
+frontend/node_modules/
 Off-chain/basin/
 Off-chain/compute/__pycache__/
 Off-chain/compute/.env
 Off-chain/compute/__pycache__/
 Signattestations/node_modules/
 Signattestations/.env
-proofStorage/env/
-proofStorage/src/__pycache__/
-proofStorage/.env
+proofs/env/
+proofs/src/__pycache__/
+proofs/.env
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
-zkdns/node_modules
-zkdns/.pnp
-zkdns/.pnp.js
-zkdns/.env
+frontend/node_modules
+frontend/.pnp
+frontend/.pnp.js
+frontend/.env
 
 # testing
-zkdns/coverage
+frontend/coverage
 
 # production
-zkdns/build
+frontend/build
 
 # misc
-zkdns/.DS_Store
-zkdns/.env.local
-zkdns/.env.development.local
-zkdns/.env.test.local
-zkdns/.env.production.local
+frontend/.DS_Store
+frontend/.env.local
+frontend/.env.development.local
+frontend/.env.test.local
+frontend/.env.production.local
 
-zkdns/npm-debug.log*
-zkdns/yarn-debug.log*
-zkdns/yarn-error.log*
+frontend/npm-debug.log*
+frontend/yarn-debug.log*
+frontend/yarn-error.log*
