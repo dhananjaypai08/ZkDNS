@@ -98,7 +98,7 @@ const TopicMessages = ({ topicId }) => {
       </h2>
 
       <div className="flex space-x-4 mb-6">
-        {['messages', 'schema', 'attestation', 'stackrReputation'].map((tab) => (
+        {['messages', 'schema', 'attestation'].map((tab) => (
           <motion.button
             key={tab}
             onClick={() => setActiveTab(tab)}
@@ -161,7 +161,6 @@ const TopicMessages = ({ topicId }) => {
             )}
             {activeTab === 'schema' && renderDataSection("Schema Indexing Data", schemaData)}
             {activeTab === 'attestation' && renderDataSection("Attestation Indexing Data", attestationData)}
-            {activeTab === 'stackrReputation' && renderDataSection("Domain user Reputation via Stackr MRU", reputation_state)}
           </motion.div>
         )}
       </AnimatePresence>
