@@ -10,6 +10,13 @@ Signattestations/.env
 proofs/env/
 proofs/src/__pycache__/
 proofs/.env
+proofs/node_modules
+proofs/circuits/ZkDNS_cpp
+proofs/circuits/ZkDNS_js
+proofs/circuits/ZkDNS.wasm
+proofs/circuits/ZkDNS.zkey
+proofs/circuits/ZkDNS.r1cs
+proofs/circuits/ZkDNS.sym
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
 # dependencies
