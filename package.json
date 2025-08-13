@@ -1,0 +1,25 @@
+{
+  "name": "zkdns",
+  "version": "1.0.0",
+  "description": "A secure and transparent way of querying DNS servers using zero-knowledge proofs (zkProofs).",
+  "main": "index.js",
+  "scripts": {
+    "contract:build": "cd contracts && zsh -o extendedglob -c 'forge build --contracts src/**/*.sol~src/EncryptedZkDNS.sol'",
+    "frontend:dev": "cd frontend && npm run dev",
+    "circuits:server": "cd proofs/src && python main.py",
+    "contract:test": "cd contracts && zsh -o extendedglob -c 'forge test -vv --contracts test/**/*.sol~src/EncryptedZkDNS.sol'",
+    "test": ""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dhananjaypai08/ZkDNS.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/dhananjaypai08/ZkDNS/issues"
+  },
+  "homepage": "https://github.com/dhananjaypai08/ZkDNS#readme"
+}
