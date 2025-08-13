@@ -3,7 +3,6 @@ pragma circom 2.0.0;
 include "../node_modules/circomlib/circuits/poseidon.circom";
 
 template ZkDNS() {
-    // Public inputs
     signal input domainHash;
     signal input ipAddressHash;
     signal input recordTypeHash;
@@ -16,13 +15,11 @@ template ZkDNS() {
     signal input expiry;
     signal input secretKey;
 
-    // Intermediate signals
     signal domainHashCheck;
     signal ipAddressHashCheck;
     signal recordTypeHashCheck;
     signal expiryHashCheck;
 
-    // Hash the private inputs
     component domainHasher = Poseidon(2);
     domainHasher.inputs[0] <== domain;
     domainHasher.inputs[1] <== secretKey;
@@ -43,13 +40,10 @@ template ZkDNS() {
     expiryHasher.inputs[1] <== secretKey;
     expiryHashCheck <== expiryHasher.out;
 
-    // Check if the hashed values match the public inputs
     domainHash === domainHashCheck;
     ipAddressHash === ipAddressHashCheck;
     recordTypeHash === recordTypeHashCheck;
     expiryHash === expiryHashCheck;
-
-    // Additional constraints can be added here, e.g., expiry date checks
 }
 
-component main = ZkDNS();
+component main { public [domainHash, ipAddressHash, recordTypeHash, expiryHash] } = ZkDNS();
