@@ -8,6 +8,7 @@
     "frontend:dev": "cd frontend && npm run dev",
     "circuits:server": "cd proofs/src && python main.py",
     "contract:test": "cd contracts && zsh -o extendedglob -c 'forge test -vv --contracts test/**/*.sol~src/EncryptedZkDNS.sol'",
+    "compile:circuit": "cd proofs/circuits && circom ZkDNS.circom --r1cs --wasm --sym --c", 
     "test": ""
   },
   "repository": {
