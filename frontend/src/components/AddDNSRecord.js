@@ -120,7 +120,7 @@ function AddDNSRecord({ contractData, connectedAddress, walletProvider, contract
     const providerEndpoint = "wss://turing-rpc.avail.so/ws";
     const sdk = await SDK.New(providerEndpoint);
     console.log(sdk);
-    const KEY = process.env.MNEMONIC_KEY;
+    const KEY = process.env.REACT_APP_MNEMONIC_KEY;
     const account = new Keyring({ type: "sr25519" }).addFromUri(KEY);
     const result = await sdk.tx.dataAvailability.submitData(data, WaitFor.BlockInclusion, account);
     if (result.isErr) {

@@ -17,7 +17,7 @@ function SearchDNSRecord({ contract }) {
   const [final_ip, setFinalIP] = useState("Please verify and then click on DNS Resolver");
 
   useEffect(() => {
-    localStorage.clear("zkproof");
+    localStorage.removeItem("zkproof");
   }, []);
 
   useEffect(() => {

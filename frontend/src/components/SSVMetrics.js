@@ -138,7 +138,7 @@ const SSVMetrics = () => {
             className="animate-spin rounded-full h-32 w-32 border-t-2 border-b-2 border-indigo-500"
             initial={{ scale: 0.5 }}
             animate={{ scale: 1 }}
-            transition={{ duration: 1, ease: 'easeInOut', loop: Infinity }}
+            transition={{ duration: 1, ease: 'easeInOut', repeat: Infinity }}
           />
         </div>
       )}
